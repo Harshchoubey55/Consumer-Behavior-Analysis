@@ -8,7 +8,7 @@
     "medusa-storefront"
   ],
   "scripts": {
-    "dev": "next dev --turbopack -p 8000",
+    "dev": "next dev -p 8000",
     "build": "next build",
     "start": "next start -p 8000",
     "lint": "next lint",
@@ -60,5 +60,9 @@
   "overrides": {
     "react": "19.0.3",
     "react-dom": "19.0.3"
+  }
+  ,
+  "engines": {
+    "node": ">=20 <=20.20.0"
   }
 }
