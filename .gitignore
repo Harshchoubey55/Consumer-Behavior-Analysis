@@ -1,39 +1,60 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies (recursive — catches all subdirectories)
+node_modules/
+.pnp
 .pnp.js
-.vscode
 
-# testing
+# Build outputs
+.next/
+/out/
+/build
+dist/
+
+# Medusa build artifacts
+.medusa/server/
+.medusa/admin/
+medusa-admin/
+
+# IDE
+.vscode
+.idea
+
+# Testing
 /coverage
 .playwright
 
-# next.js
-/.next/
-/out/
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+!.env.example
 
-# production
-/build
-
-# misc
+# OS
 .DS_Store
-*.pem
 
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files
-.env*
-!.env.example
-
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript generated
 *.tsbuildinfo
 next-env.d.ts
+
+# Misc
+*.pem
+.cache
+
+# Scratch / working directories
+v3_extract/
+v4_extract/
+
+# Duplicate lockfiles (standardized on pnpm at root, npm in sub-projects)
+/yarn.lock
+medusa-backend/yarn.lock
+medusa-backend/pnpm-lock.yaml
+medusa-backend-storefront/yarn.lock
+medusa-backend-storefront/pnpm-lock.yaml

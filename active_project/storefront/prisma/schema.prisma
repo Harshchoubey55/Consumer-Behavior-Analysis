@@ -1,0 +1,132 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Raw Event Log ────────────────────────────────────────────────────────────
+model Event {
+  id          String   @id @default(cuid())
+  sessionId   String
+  userId      String?
+  eventType   String   // page_view | product_view | category_click | add_to_cart | remove_from_cart | checkout_start | checkout_step | purchase | search
+  page        String
+  path        String
+  referrer    String?
+  productId   String?
+  productName String?
+  categoryId  String?
+  searchQuery String?
+  cartValue   Float?
+  checkoutStep Int?
+  metadata    String?  // JSON blob for extra context
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([productId])
+}
+
+// ─── Processed Sessions ───────────────────────────────────────────────────────
+model Session {
+  id              String   @id
+  userId          String?
+  startTime       DateTime
+  endTime         DateTime?
+  duration        Int?      // seconds
+  pageViews       Int       @default(0)
+  productViews    Int       @default(0)
+  cartAdds        Int       @default(0)
+  searches        Int       @default(0)
+  converted       Boolean   @default(false)
+  bounced         Boolean   @default(false)
+  checkoutReached Boolean   @default(false)
+  exitPage        String?
+  entryPage       String?
+  deviceType      String?
+  country         String?
+  processedAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([startTime])
+  @@index([converted])
+}
+
+// ─── User Behavioral Profiles ─────────────────────────────────────────────────
+model UserProfile {
+  id                   String   @id
+  totalSessions        Int      @default(0)
+  totalPageViews       Int      @default(0)
+  totalProductViews    Int      @default(0)
+  totalCartAdds        Int      @default(0)
+  totalPurchases       Int      @default(0)
+  totalRevenue         Float    @default(0)
+  avgSessionDuration   Float    @default(0)
+  avgCartValue         Float    @default(0)
+  conversionRate       Float    @default(0)
+  bounceRate           Float    @default(0)
+  lastSeen             DateTime?
+  firstSeen            DateTime?
+  churnRisk            Float    @default(0)   // 0-1 probability
+  engagementScore      Float    @default(0)   // 0-100
+  segment              String?  // high_value | at_risk | new | casual
+  updatedAt            DateTime @updatedAt
+}
+
+// ─── Product Analytics ────────────────────────────────────────────────────────
+model ProductAnalytics {
+  id            String   @id @default(cuid())
+  productId     String   @unique
+  productName   String
+  views         Int      @default(0)
+  cartAdds      Int      @default(0)
+  purchases     Int      @default(0)
+  revenue       Float    @default(0)
+  viewToCart    Float    @default(0)  // conversion rate %
+  cartToPurchase Float   @default(0)  // conversion rate %
+  avgViewTime   Float    @default(0)  // seconds
+  updatedAt     DateTime @updatedAt
+}
+
+// ─── Funnel Steps ─────────────────────────────────────────────────────────────
+model FunnelSnapshot {
+  id              String   @id @default(cuid())
+  date            DateTime @default(now())
+  period          String   // hourly | daily | weekly
+  visitors        Int      @default(0)
+  productViewers  Int      @default(0)
+  cartAdders      Int      @default(0)
+  checkoutStarters Int     @default(0)
+  purchasers      Int      @default(0)
+
+  @@index([date])
+  @@index([period])
+}
+
+// ─── Prescriptive Insights ────────────────────────────────────────────────────
+model Insight {
+  id          String   @id @default(cuid())
+  type        String   // product_issue | funnel_leak | engagement_drop | churn_alert | opportunity
+  severity    String   // critical | warning | info
+  title       String
+  description String
+  entityId    String?  // productId or sessionId it relates to
+  entityName  String?
+  metric      String?  // the metric that triggered it
+  value       Float?   // the metric value
+  threshold   Float?   // the threshold breached
+  action      String?  // recommended action
+  dismissed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([createdAt])
+}

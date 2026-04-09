@@ -1,0 +1,114 @@
+version: '3.9'
+
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: analytics_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: analytics_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./analytics-engine/sql/001_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./analytics-engine/sql/002_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+      - ./analytics-engine/sql/003_sequences.sql:/docker-entrypoint-initdb.d/03_sequences.sql
+      - ./analytics-engine/sql/004_context.sql:/docker-entrypoint-initdb.d/04_context.sql
+      - ./analytics-engine/sql/005_context_seed.sql:/docker-entrypoint-initdb.d/05_context_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d analytics_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Analytics API (event ingestion + analytics endpoints) ─────
+  analytics-api:
+    build:
+      context: ./analytics-api
+      dockerfile: Dockerfile
+    container_name: analytics_api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
+      STOREFRONT_URL: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./analytics-api:/app
+      - /app/node_modules
+      - /app/.next
+
+  # ─── Analytics Dashboard ───────────────────────────────────────
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: analytics_dashboard
+    environment:
+      ANALYTICS_API_URL: http://analytics-api:3001
+      NODE_ENV: development
+    ports:
+      - "3002:3002"
+    depends_on:
+      - analytics-api
+    volumes:
+      - ./dashboard:/app
+      - /app/node_modules
+      - /app/.next
+
+  # ─── Storefront (e-commerce frontend) ─────────────────────────
+  storefront:
+    build:
+      context: ./storefront
+      dockerfile: Dockerfile
+    container_name: analytics_storefront
+    environment:
+      NEXT_PUBLIC_ANALYTICS_API_URL: http://localhost:3001
+      NEXT_PUBLIC_MEDUSA_BACKEND_API: http://localhost:9000
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - analytics-api
+    volumes:
+      - ./storefront:/app
+      - /app/node_modules
+      - /app/.next
+
+  # ─── Analytics Engine (Python processor) ──────────────────────
+  analytics-engine:
+    build:
+      context: ./analytics-engine
+      dockerfile: Dockerfile
+    container_name: analytics_engine
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Runs once on start, then on a schedule
+    command: >
+      sh -c "
+        echo 'Waiting for DB...' &&
+        sleep 5 &&
+        python processors/pipeline.py --mode=full &&
+        echo 'Initial pipeline run complete.' &&
+        while true; do
+          sleep 900;
+          python processors/pipeline.py --mode=incremental;
+          echo 'Incremental pipeline run complete.';
+        done
+      "
+    volumes:
+      - ./analytics-engine:/app
+      - engine_models:/app/models/artifacts
+
+volumes:
+  postgres_data:
+  engine_models:
