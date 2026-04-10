@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=soft&color=0:6e40c9,100:2563eb&height=150&section=header&text=Cognitive%20Analytics%20Engine&fontSize=38&fontColor=ffffff&fontAlignY=45&desc=active_project%20%E2%80%94%20The%20Behavioral%20Intelligence%20System&descSize=16&descAlignY=70&animation=twinkling" width="100%"/>
 
@@ -23,21 +23,21 @@ This is the **core analytics system** — a self-contained behavioral intelligen
 
 ```mermaid
 graph TB
-    subgraph FRONTEND ["🌐 Frontend Layer"]
+    subgraph FRONTEND["🌐 Frontend Layer"]
         direction LR
         SF["🛍️ Storefront :3000"]
         DASH["📊 Dashboard :3002"]
     end
 
-    subgraph BACKEND ["⚙️ Backend Layer"]
+    subgraph BACKEND["⚙️ Backend Layer"]
         API["📡 Analytics API :3001"]
     end
 
-    subgraph DATA ["💾 Data Layer"]
+    subgraph DATA["💾 Data Layer"]
         PG[("🐘 PostgreSQL :5432")]
     end
 
-    subgraph ML ["🧠 Intelligence Layer"]
+    subgraph ML["🧠 Intelligence Layer"]
         ENG["🐍 Analytics Engine"]
     end
 
@@ -68,15 +68,15 @@ graph TB
 
 ### 1️⃣ Contextual Decision Reconstruction
 
-> *Standard analytics:* "User viewed Product A and didn't buy."  
+> *Standard analytics:* "User viewed Product A and didn't buy."
 > *This system:* "User viewed Product A **after** seeing 5 cheaper products, making it look 40% more expensive than their session average. Attention depth was shallow (23% scroll). Arrived via browse, not search. **Context-conditional conversion: 8% vs. 31% if viewed first.**"
 
 ```mermaid
 graph LR
-    E["🎯 Product View Event"] --> CR["📊 Context<br/>Reconstruction"]
-    CR --> CCR["📈 Context-Conditional<br/>Conversion Rates"]
-    CR --> CHI["🧪 Chi-Squared<br/>Significance Test"]
-    CCR --> INS["💡 Contrastive<br/>Insight Generation"]
+    E["🎯 Product View Event"] --> CR["📊 Context\nReconstruction"]
+    CR --> CCR["📈 Context-Conditional\nConversion Rates"]
+    CR --> CHI["🧪 Chi-Squared\nSignificance Test"]
+    CCR --> INS["💡 Contrastive\nInsight Generation"]
     CHI --> INS
 
     style E fill:#3b82f6,stroke:#2563eb,color:#fff
@@ -88,7 +88,7 @@ graph LR
 
 **Insight types generated:** `comparison_fatigue`, `price_anchor_high`, `price_anchor_low`, `first_impression`, `attention_depth`, `search_intent`, `category_saturation`
 
-###  2️⃣ Sequential Behavioral Modeling (Markov Chains)
+### 2️⃣ Sequential Behavioral Modeling (Markov Chains)
 
 Sessions are **state sequences**, not event counts:
 
@@ -97,6 +97,7 @@ Sessions are **state sequences**, not event counts:
 ```
 
 The sequence modeler computes:
+
 - **Transition probability matrices** — P(Cart | View) = 0.28
 - **Per-transition conversion lift** — Cart→Purchase has 2.3× lift over baseline
 - **Common path mining** — Top 10 most frequent session paths
@@ -116,10 +117,10 @@ sequenceDiagram
     T->>API: POST /events + GET /score
     API->>API: Markov risk = 0.73
     API->>B: Select best arm for context
-    B-->>API: "show_discount_10pct"
-    API-->>T: { risk: 0.73, intervention: {...} }
+    B-->>API: show_discount_10pct
+    API-->>T: risk 0.73 + intervention
     T->>UI: Render nudge
-    UI->>U: "🎉 10% off — expires in 5 min"
+    UI->>U: 10% off — expires in 5 min
     U->>T: add_to_cart (reward = 1)
     T->>API: POST outcome → bandit learns
 ```
@@ -152,20 +153,13 @@ sequenceDiagram
 ```mermaid
 graph TD
     RAW["📥 Raw Events"] --> S1
-
-    subgraph PIPELINE ["8-Stage Processing Pipeline"]
-        S1["1. refresh_sessions<br/><sub>30-min inactivity sessionization</sub>"]
-        S2["2. refresh_product_analytics<br/><sub>views, cart rate, time, scroll</sub>"]
-        S3["3. compute_user_features<br/><sub>RFM, churn risk, engagement tier</sub>"]
-        S4["4. refresh_daily_kpis<br/><sub>time-series snapshots</sub>"]
-        S5["5. refresh_funnel<br/><sub>conversion funnel states</sub>"]
-        S6["6. generate_recommendations<br/><sub>prescriptive rules engine</sub>"]
-        S7["7. run_sequence_pipeline<br/><sub>Markov chains + anomalies</sub>"]
-        S8["8. run_context_pipeline<br/><sub>decision reconstruction + chi²</sub>"]
-
-        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
-    end
-
+    S1["1. refresh_sessions"] --> S2["2. refresh_product_analytics"]
+    S2 --> S3["3. compute_user_features"]
+    S3 --> S4["4. refresh_daily_kpis"]
+    S4 --> S5["5. refresh_funnel"]
+    S5 --> S6["6. generate_recommendations"]
+    S6 --> S7["7. run_sequence_pipeline"]
+    S7 --> S8["8. run_context_pipeline"]
     S8 --> OUT["📊 Dashboard-Ready Analytics"]
 
     style RAW fill:#6b7280,stroke:#4b5563,color:#fff
@@ -204,7 +198,10 @@ docker compose up --build
 <details>
 <summary><b>📋 Step-by-step instructions</b></summary>
 
+<br/>
+
 #### Database
+
 ```bash
 psql -U postgres -c "CREATE DATABASE analytics_db;"
 psql -U postgres -d analytics_db -f analytics-engine/sql/001_schema.sql
@@ -215,11 +212,13 @@ psql -U postgres -d analytics_db -f analytics-engine/sql/005_context_seed.sql
 ```
 
 #### Analytics API
+
 ```bash
 cd analytics-api && cp .env.example .env && npm install && npm run dev
 ```
 
 #### Python Pipeline
+
 ```bash
 cd analytics-engine
 python -m venv venv
@@ -229,11 +228,13 @@ python processors/pipeline.py --mode=full
 ```
 
 #### Dashboard
+
 ```bash
 cd dashboard && cp .env.example .env && npm install && npm run dev
 ```
 
 #### Storefront
+
 ```bash
 cd storefront && cp .env.example .env && npm install && npm run dev
 ```
@@ -251,17 +252,16 @@ active_project/
 ├── storefront/                     # Instrumented storefront (:3000)
 │   ├── app/
 │   │   ├── page.tsx                    Homepage with product grid
-│   │   ├── product/[handle]/page.tsx   Product detail page
+│   │   ├── product/[handle]/           Product detail page
 │   │   ├── search/                     Search functionality
 │   │   ├── dashboard/page.tsx          Embedded mini-dashboard (37KB)
 │   │   └── api/                        Proxy API routes
-│   ├── components/
-│   │   ├── tracking/tracker.ts             ★ Core behavioral tracker (15KB)
-│   │   ├── tracking/InterventionProvider   ★ Real-time intervention UI
-│   │   ├── tracking/page-tracker.tsx       Auto page_view events
-│   │   └── tracking/product-view-tracker   Detailed product_view events
+│   ├── components/tracking/
+│   │   ├── InterventionProvider.tsx     ★ Real-time intervention UI
+│   │   ├── page-tracker.tsx            Auto page_view events
+│   │   └── product-view-tracker.tsx    Detailed product_view events
 │   └── lib/
-│       ├── tracking/tracker.ts         Event capture engine
+│       ├── tracking/tracker.ts         ★ Core behavioral tracker (15KB)
 │       ├── analytics/processor.ts      Client-side analytics (13KB)
 │       └── db.ts                       Database connection
 │
@@ -276,8 +276,8 @@ active_project/
 │   │       ├── funnel/route.ts         GET — conversion funnel
 │   │       ├── paths/route.ts          GET — Markov paths
 │   │       ├── predictions/route.ts    GET — ML predictions
-│   │       ├── recommendations/route.ts GET — prescriptive actions
-│   │       ├── context/route.ts        GET — decision context analysis
+│   │       ├── recommendations/        GET — prescriptive actions
+│   │       ├── context/route.ts        GET — decision context
 │   │       ├── evaluation/route.ts     GET — causal evaluation
 │   │       └── interventions/route.ts  GET — intervention decisions
 │   └── lib/db.ts                   PostgreSQL pool
@@ -322,6 +322,7 @@ active_project/
 MIT
 
 <div align="center">
+
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:6e40c9,100:2563eb&height=100&section=footer" width="100%"/>
+
 </div>
-]]>
