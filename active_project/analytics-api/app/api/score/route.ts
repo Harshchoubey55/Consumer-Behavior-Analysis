@@ -6,25 +6,24 @@ export const runtime = 'nodejs';
 /**
  * POST /api/score
  *
- * Real-time in-session risk scoring.
+ * Real-time in-session risk scoring + randomized intervention assignment.
  * Called by the storefront tracker as events accumulate in a session.
- *
- * This is the key differentiator: scoring happens DURING the session,
- * not after it ends. The score is based on the sequence of events
- * seen so far — not just aggregate counts.
  *
  * Body: {
  *   session_id: string,
- *   event_sequence: string[],   // ordered canonical state names
- *   timing_deltas_ms: number[], // ms between events
+ *   event_sequence: string[],
+ *   timing_deltas_ms: number[],
+ *   raw_events?: { event_type: string; page_type?: string }[],
+ *   latest_context?: object,
  * }
  *
  * Returns: {
- *   risk_score: number,         // 0 (safe) to 1 (high abandonment risk)
- *   risk_tier: string,          // low | medium | high | critical
+ *   risk_score: number,
+ *   risk_tier: string,
  *   current_state: string,
  *   conversion_probability: number,
  *   explanation: string,
+ *   intervention: string,  // NONE | COMPARE_MATRIX | PRICE_REFRAME
  * }
  */
 
@@ -88,93 +87,18 @@ async function getMatrix() {
   return { matrix, convRates };
 }
 
-// ─── Causal Bandit Interventions ────────────────────────
+// ─── Fixed-Probability Intervention Assignment ─────────────────────
+// A/B/C test with known propensities (makes IPW valid)
+// NONE = 50%, COMPARE_MATRIX = 25%, PRICE_REFRAME = 25%
 
-let banditCache: { A: number[][][], b: number[][][], arms: string[] } | null = null;
-let banditCacheTime = 0;
-
-async function getBanditParams() {
-   const now = Date.now();
-   if (banditCache && (now - banditCacheTime) < CACHE_TTL_MS) return banditCache;
-   try {
-     const rows = await query<{ arm_id: number; arm_name: string; a_matrix_json: string; b_vector_json: string }>(
-       `SELECT * FROM causal_bandit_parameters ORDER BY arm_id`
-     );
-     if (rows.length === 0) return null;
-     const A: number[][][] = [];
-     const b: number[][][] = [];
-     const arms: string[] = [];
-     for (const r of rows) {
-       A[r.arm_id] = JSON.parse(r.a_matrix_json);
-       b[r.arm_id] = JSON.parse(r.b_vector_json);
-       arms[r.arm_id] = r.arm_name;
-     }
-     banditCache = { A, b, arms };
-     banditCacheTime = now;
-     return banditCache;
-   } catch { return null; }
+function assignArm(): { arm: string; propensity: number } {
+  const r = Math.random();
+  if (r < 0.50) return { arm: 'NONE', propensity: 0.50 };
+  if (r < 0.75) return { arm: 'COMPARE_MATRIX', propensity: 0.25 };
+  return { arm: 'PRICE_REFRAME', propensity: 0.25 };
 }
 
-function invertMatrix(M: number[][]): number[][] {
-    // Simple 2x2 or generic inverse using Gauss-Jordan is needed, BUT for speed, 
-    // we can assume the A matrix is pre-inverted by Python (Python uploads A_inv).
-    // Actually, storing A_inv in A_matrix_json from python avoids JS matrix math complexity!
-    // Let's assume A contains A_inv.
-    return M;
-}
-
-function getIntervention(ctx: any, bandit: any): string {
-    if (!bandit || !ctx) return 'NONE';
-    
-    // Feature vector identical to Python
-    const vec = [
-        ctx.prior_product_views || 0,
-        ctx.prior_cart_adds || 0,
-        ctx.prior_searches || 0,
-        ctx.session_duration_so_far_s || 0,
-        ctx.price_rank_in_session || 0,
-        ctx.price_vs_median_pct || 0,
-        ctx.is_most_expensive_seen ? 1 : 0,
-        ctx.is_cheapest_seen ? 1 : 0,
-        (ctx.time_on_page_before_ms || 0) / 1000.0,
-        (ctx.scroll_depth_pct || 0) / 100.0,
-        ctx.scroll_velocity_avg || 0,
-        ctx.micro_hesitations || 0,
-        ctx.same_category_views_before || 0,
-        ctx.is_return_view ? 1 : 0,
-        ctx.is_from_search ? 1 : 0
-    ];
-    
-    const alpha = 0.1;
-    let maxP = -Infinity;
-    let bestArm = 0;
-    
-    for (let i = 0; i < bandit.arms.length; i++) {
-        const A_inv = bandit.A[i]; // we assume Python writes A_inv to a_matrix_json
-        const theta = matrixVectorMultiply(A_inv, bandit.b[i]);
-        const expectedReward = dotProduct(theta, vec);
-        
-        // Context uncertainty: vec^T * A_inv * vec
-        const quadForm = dotProduct(matrixVectorMultiply(A_inv, vec), vec);
-        const p = expectedReward + alpha * Math.sqrt(Math.abs(quadForm));
-        
-        if (p > maxP) {
-            maxP = p;
-            bestArm = i;
-        }
-    }
-    
-    return bandit.arms[bestArm] || 'NONE';
-}
-
-function matrixVectorMultiply(mat: number[][], vec: number[] | number[][]): number[] {
-    const v = Array.isArray(vec[0]) ? (vec as number[][]).map(r => r[0]) : vec as number[];
-    return mat.map(row => row.reduce((sum, val, j) => sum + val * (v[j] || 0), 0));
-}
-
-function dotProduct(v1: number[], v2: number[]): number {
-    return v1.reduce((sum, val, i) => sum + val * (v2[i] || 0), 0);
-}
+// ─── Markov Forward Conversion Probability ────────────────────────
 
 function computeConversionProbability(
   currentState: string,
@@ -297,6 +221,7 @@ export async function POST(req: NextRequest) {
         risk_score: 0.3, risk_tier: 'low',
         current_state: 'HOME',
         conversion_probability: 0.7,
+        intervention: 'NONE',
       });
     }
 
@@ -321,16 +246,8 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // Calculate Real-Time Causal Intervention!
-    let intervention = 'NONE';
-    if (latest_context) {
-        try {
-            const bandit = await getBanditParams();
-            intervention = getIntervention(latest_context, bandit);
-        } catch (e) {
-            console.error('Bandit failed', e);
-        }
-    }
+    // ─── Fixed-Probability Randomized Intervention Assignment ───
+    const { arm: intervention, propensity } = assignArm();
     
     // Merge intervention into result
     const finalResult = { ...result, intervention };
@@ -342,12 +259,11 @@ export async function POST(req: NextRequest) {
         VALUES ($1, $2, $3, $4, NOW())
       `, [session_id, finalResult.risk_score, finalResult.risk_tier, deduped]).catch(() => {});
       
-      if (intervention !== 'NONE') {
-         query(`
-            INSERT INTO intervention_logs (session_id, context_features, chosen_arm)
-            VALUES ($1, $2, $3)
-         `, [session_id, latest_context, intervention]).catch(() => {});
-      }
+      // Always log intervention assignment (including NONE for control)
+      query(`
+        INSERT INTO intervention_logs (session_id, assigned_arm, propensity, context_state)
+        VALUES ($1, $2, $3, $4)
+      `, [session_id, intervention, propensity, latest_context ? JSON.stringify(latest_context) : null]).catch(() => {});
     }
 
     return NextResponse.json(finalResult, {

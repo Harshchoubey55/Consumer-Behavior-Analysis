@@ -1,106 +1,148 @@
 """
-Causal Bandit Intervention Engine
-Uses a Contextual Bandit (LinUCB) to determine if a UI intervention 
-will yield a causal uplift in conversion.
+causal_bandit.py  →  intervention_experiment.py
+================================================
+Randomized Controlled Intervention Experiment.
+
+Replaces the adaptive LinUCB bandit with FIXED-PROBABILITY A/B/C randomization.
+This design makes IPW/CATE mathematically valid because propensity scores are
+known constants, not changing model outputs.
+
+Arms:
+  0 = NONE           (control)       — propensity = 0.50
+  1 = COMPARE_MATRIX (treatment A)   — propensity = 0.25
+  2 = PRICE_REFRAME  (treatment B)   — propensity = 0.25
+
+Pipeline integration:
+  - Stage 12 in pipeline.py calls run_intervention_pipeline(conn)
+  - This does a REWARD BACKFILL: finds intervention_logs where outcome has not
+    been updated, joins with sessions to check if the session converted, and
+    writes the reward back.
 """
 
 import os
 import json
-import numpy as np
+import random
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-class CausalBandit:
-    def __init__(self, n_features=15, alpha=0.1):
-        self.n_features = n_features
-        self.alpha = alpha
-        
-        # A matrix for each arm (0: No Intervention, 1: Compare UI, 2: Reframe Price UI)
-        self.n_arms = 3
-        self.A = [np.identity(self.n_features) for _ in range(self.n_arms)]
-        self.b = [np.zeros((self.n_features, 1)) for _ in range(self.n_arms)]
-        
-        # Warm start
-        self._seed_priors()
+# ── Fixed-probability arm configuration ─────────────────────────────
+ARMS = {
+    'NONE':           {'propensity': 0.50, 'cumulative': 0.50},
+    'COMPARE_MATRIX': {'propensity': 0.25, 'cumulative': 0.75},
+    'PRICE_REFRAME':  {'propensity': 0.25, 'cumulative': 1.00},
+}
 
-    def _seed_priors(self):
-        # Priors to avoid initial random chaos
-        # Arm 1 (Compare UI) works well for high "prior_product_views"
-        self.b[1][0] = 0.5 
-        # Arm 2 (Reframe Price UI) works well for high "price_vs_median"
-        self.b[2][5] = 0.5
+ARM_ORDER = ['NONE', 'COMPARE_MATRIX', 'PRICE_REFRAME']
+PROPENSITIES = {arm: ARMS[arm]['propensity'] for arm in ARM_ORDER}
 
-    def get_action(self, context_vector):
-        """
-        Uses LinUCB to select an arm.
-        context_vector: numpy array of shape (n_features, 1)
-        """
-        if len(context_vector) != self.n_features:
-            logger.warning(f"Feature dimension mismatch. Expected {self.n_features}, got {len(context_vector)}")
-            # Pad or truncate
-            if len(context_vector) < self.n_features:
-                context_vector = np.pad(context_vector, (0, self.n_features - len(context_vector)))
-            else:
-                context_vector = context_vector[:self.n_features]
-        
-        context_vector = context_vector.reshape(-1, 1)
-        p = np.zeros(self.n_arms)
-        
-        for a in range(self.n_arms):
-            A_inv = np.linalg.inv(self.A[a])
-            theta_a = A_inv.dot(self.b[a])
-            p[a] = theta_a.T.dot(context_vector) + self.alpha * np.sqrt(context_vector.T.dot(A_inv).dot(context_vector))
-            
-        return int(np.argmax(p))
 
-    def update(self, arm, context_vector, reward):
-        """
-        Update the model after observing a reward (0 = bounce, 1 = convert).
-        """
-        if len(context_vector) != self.n_features:
-            if len(context_vector) < self.n_features:
-                context_vector = np.pad(context_vector, (0, self.n_features - len(context_vector)))
-            else:
-                context_vector = context_vector[:self.n_features]
-                
-        context_vector = context_vector.reshape(-1, 1)
-        self.A[arm] += context_vector.dot(context_vector.T)
-        self.b[arm] += reward * context_vector
-
-bandit_instance = CausalBandit()
-
-def decide_intervention(context_dict):
+def assign_arm():
     """
-    Called by the API when evaluating a PDP view.
-    Returns intervention type string.
+    Randomly assign an arm with fixed probabilities.
+    Returns (arm_name: str, propensity: float).
     """
-    # Build continuous feature vector from context
-    features = [
-        context_dict.get('prior_product_views', 0),
-        context_dict.get('prior_cart_adds', 0),
-        context_dict.get('prior_searches', 0),
-        context_dict.get('session_duration_so_far_s', 0),
-        context_dict.get('price_rank_in_session', 0),
-        context_dict.get('price_vs_median_pct', 0) if context_dict.get('price_vs_median_pct') is not None else 0,
-        1 if context_dict.get('is_most_expensive_seen') else 0,
-        1 if context_dict.get('is_cheapest_seen') else 0,
-        context_dict.get('time_on_page_before_ms', 0) / 1000.0,
-        context_dict.get('scroll_depth_pct', 0) / 100.0,
-        context_dict.get('scroll_velocity_avg', 0),
-        context_dict.get('micro_hesitations', 0),
-        context_dict.get('same_category_views_before', 0),
-        1 if context_dict.get('is_return_view') else 0,
-        1 if context_dict.get('is_from_search') else 0
-    ]
+    r = random.random()
+    cumulative = 0.0
+    for arm in ARM_ORDER:
+        cumulative += ARMS[arm]['propensity']
+        if r < cumulative:
+            return arm, ARMS[arm]['propensity']
+    # Fallback (shouldn't reach here)
+    return 'NONE', 0.50
+
+
+def get_propensity(arm_name: str) -> float:
+    """Return the known propensity for an arm."""
+    return PROPENSITIES.get(arm_name, 0.50)
+
+
+# ── Reward Backfill ──────────────────────────────────────────────────
+
+def backfill_rewards(conn):
+    """
+    Link intervention assignments to session outcomes.
     
-    vec = np.array(features)
-    arm = bandit_instance.get_action(vec)
+    For every intervention_log where outcome_updated = FALSE,
+    look up whether that session eventually converted (from sessions table).
+    Update the outcome accordingly.
     
-    mapping = {
-        0: "NONE",
-        1: "COMPARE_MATRIX",
-        2: "PRICE_REFRAME"
-    }
+    This closes the reward loop that was completely missing before.
+    """
+    logger.info("Backfilling intervention rewards from session outcomes...")
     
-    return mapping.get(arm, "NONE")
+    with conn.cursor() as cur:
+        # Find all un-updated intervention logs and join with sessions
+        cur.execute("""
+            UPDATE intervention_logs il
+            SET 
+                outcome = CASE WHEN s.converted THEN 1 ELSE 0 END,
+                outcome_updated = TRUE
+            FROM sessions s
+            WHERE il.session_id = s.session_id
+              AND il.outcome_updated = FALSE
+        """)
+        updated = cur.rowcount
+    
+    conn.commit()
+    logger.info(f"Reward backfill complete: {updated} intervention logs updated.")
+    return updated
+
+
+# ── Arm Summary Stats ────────────────────────────────────────────────
+
+def get_arm_summary(conn):
+    """
+    Compute per-arm statistics for the dashboard.
+    Returns list of dicts with: arm_name, pulls, conversions, empirical_rate.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT 
+                assigned_arm AS arm_name,
+                COUNT(*) AS pulls,
+                SUM(CASE WHEN outcome = 1 THEN 1 ELSE 0 END) AS conversions,
+                ROUND(AVG(outcome::numeric) * 100, 2) AS empirical_conversion_rate
+            FROM intervention_logs
+            WHERE outcome_updated = TRUE
+            GROUP BY assigned_arm
+            ORDER BY pulls DESC
+        """)
+        rows = cur.fetchall()
+    
+    return [dict(r) for r in rows]
+
+
+# ── Pipeline Entry Point ─────────────────────────────────────────────
+
+def run_intervention_pipeline(conn):
+    """
+    Stage 12 of the analytics pipeline.
+    
+    1. Backfill rewards (link session outcomes to prior interventions)
+    2. Log arm summary stats
+    """
+    logger.info("=" * 50)
+    logger.info("Stage 12: Intervention Experiment — Reward Backfill")
+    logger.info("=" * 50)
+    
+    # Step 1: Backfill rewards
+    updated = backfill_rewards(conn)
+    
+    # Step 2: Log summary
+    summary = get_arm_summary(conn)
+    if summary:
+        logger.info("Arm performance summary:")
+        for arm in summary:
+            logger.info(
+                f"  {arm['arm_name']:20s} | "
+                f"pulls={arm['pulls']:4d} | "
+                f"conversions={arm['conversions']:3d} | "
+                f"rate={arm['empirical_conversion_rate']}%"
+            )
+    else:
+        logger.info("No intervention data yet. Awaiting storefront traffic.")
+    
+    logger.info("Stage 12 complete.")
+    return summary

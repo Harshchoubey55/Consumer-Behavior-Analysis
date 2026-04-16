@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { tracker, registerMicroHesitation } from 'lib/tracking/tracker';
+import { useIntervention } from '../../../components/tracking/InterventionProvider';
 
 const PRODUCTS: Record<string, { id: string; name: string; price: number; category: string; description: string; features: string[] }> = {
   prod_001: { id: 'prod_001', name: 'Wireless Noise-Cancelling Headphones', price: 149, category: 'Electronics', description: 'Premium audio experience with industry-leading noise cancellation. Up to 30 hours battery life, foldable design, and plush ear cushions for all-day comfort.', features: ['Active Noise Cancellation', '30hr Battery Life', 'USB-C Charging', 'Multipoint Connection', 'Foldable Design'] },
@@ -26,8 +27,20 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [hoverStartTime, setHoverStartTime] = useState<number | null>(null);
 
+  // Wire into the intervention system (Finding 5 fix)
+  const { setCurrentProduct } = useIntervention();
+
   useEffect(() => {
     if (product) {
+      // Set current product in intervention context so popups show real data
+      setCurrentProduct({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        features: product.features,
+      });
+
       tracker.productView({
         id: product.id,
         title: product.name,
@@ -35,7 +48,10 @@ export default function ProductPage() {
         category: product.category
       });
     }
-  }, [handle, product]);
+
+    // Clear product context when leaving the page
+    return () => setCurrentProduct(null);
+  }, [handle, product, setCurrentProduct]);
 
   if (!product) {
     return (

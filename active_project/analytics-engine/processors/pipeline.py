@@ -552,6 +552,13 @@ def run_pipeline(mode: str = "incremental"):
             except Exception as e:
                 log.warning(f"Evaluation pipeline skipped: {e}")
 
+        # Stage 12: Intervention experiment reward backfill
+        try:
+            from causal_bandit import run_intervention_pipeline
+            run_intervention_pipeline(conn)
+        except Exception as e:
+            log.warning(f"Intervention pipeline skipped: {e}")
+
         log.info("Pipeline complete.")
     finally:
         conn.close()

@@ -7,16 +7,20 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    // Fetch multi-armed bandit parameters
+    // Aggregate arm stats directly from intervention_logs
+    // (No longer depends on the removed causal_bandit_parameters table)
     const armsRes = await query<{
       arm_name: string;
       pulls: number;
       conversions: number;
       empirical_conversion_rate: number;
     }>(`
-      SELECT arm_name, pulls, conversions, 
-             ROUND((conversions::numeric / GREATEST(pulls, 1)) * 100, 2) as empirical_conversion_rate
-      FROM causal_bandit_parameters
+      SELECT assigned_arm AS arm_name,
+             COUNT(*) AS pulls,
+             SUM(CASE WHEN outcome = 1 THEN 1 ELSE 0 END) AS conversions,
+             ROUND(AVG(CASE WHEN outcome_updated THEN outcome::numeric ELSE NULL END) * 100, 2) AS empirical_conversion_rate
+      FROM intervention_logs
+      GROUP BY assigned_arm
       ORDER BY pulls DESC
     `);
 

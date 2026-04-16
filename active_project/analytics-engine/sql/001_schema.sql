@@ -305,23 +305,22 @@ CREATE TABLE IF NOT EXISTS session_context_summary (
   updated_at                   TIMESTAMPTZ DEFAULT NOW()
 );
 
--- -- Causal Bandit Intervention System ------------------------
-CREATE TABLE IF NOT EXISTS causal_bandit_parameters (
-  arm_id         INTEGER PRIMARY KEY,
-  arm_name       VARCHAR(64) NOT NULL,
-  a_matrix_json  TEXT NOT NULL,
-  b_vector_json  TEXT NOT NULL,
-  updated_at     TIMESTAMPTZ DEFAULT NOW()
-);
+-- -- Randomized Intervention Experiment (A/B/C Test) -----------
+-- Fixed-probability assignment: NONE=50%, COMPARE_MATRIX=25%, PRICE_REFRAME=25%
+-- Known propensity scores make IPW/CATE mathematically valid.
 
 CREATE TABLE IF NOT EXISTS intervention_logs (
-  id               BIGSERIAL PRIMARY KEY,
-  session_id       VARCHAR(128) NOT NULL,
-  event_id         UUID,
-  context_features JSONB,
-  chosen_arm       VARCHAR(64) NOT NULL,
-  reward           INTEGER,
-  assigned_at      TIMESTAMPTZ DEFAULT NOW(),
-  rewarded_at      TIMESTAMPTZ
+  id              BIGSERIAL PRIMARY KEY,
+  session_id      VARCHAR(128) NOT NULL,
+  event_id        UUID,
+  assigned_arm    VARCHAR(64) NOT NULL,       -- NONE | COMPARE_MATRIX | PRICE_REFRAME
+  propensity      NUMERIC(5,4) NOT NULL,      -- known: 0.50 / 0.25 / 0.25
+  context_state   JSONB,                      -- decision context at assignment time
+  outcome         INTEGER DEFAULT 0,          -- 0=no convert, 1=converted
+  outcome_updated BOOLEAN DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_intervention_session ON intervention_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_intervention_arm     ON intervention_logs(assigned_arm);
 
