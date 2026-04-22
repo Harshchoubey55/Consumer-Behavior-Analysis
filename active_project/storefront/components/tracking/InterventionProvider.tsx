@@ -65,7 +65,7 @@ export function InterventionProvider({ children }: { children: React.ReactNode }
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex flex-col gap-3">
                  <div className="flex justify-between items-center text-sm border-b border-indigo-100 pb-2">
                     <span className="font-semibold text-slate-700">{currentProduct.name}</span>
-                    <span className="text-indigo-600 font-bold">${currentProduct.price}</span>
+                    <span className="text-indigo-600 font-bold">₹{currentProduct.price}</span>
                  </div>
                  {currentProduct.features.slice(0, 4).map((feature, i) => (
                     <div key={i} className="flex justify-between text-sm">
@@ -100,7 +100,7 @@ export function InterventionProvider({ children }: { children: React.ReactNode }
               </button>
               <h4 className="text-lg font-bold text-amber-400 mb-2">💡 Value Perspective</h4>
               <p className="text-sm text-slate-300">
-                At <strong className="text-white">${currentProduct.price}</strong>, the{' '}
+                At <strong className="text-white">₹{currentProduct.price}</strong>, the{' '}
                 <strong className="text-white">{currentProduct.name}</strong> averages just{' '}
                 <strong className="text-amber-400">
                   ${(currentProduct.price / 365).toFixed(2)}/day

@@ -294,8 +294,7 @@ active_project/
 │   │   ├── 002_seed.sql                Sample data
 │   │   ├── 003_sequences.sql           Markov chain tables
 │   │   ├── 004_context.sql             Decision context tables
-│   │   ├── 005_context_seed.sql        Sample context data
-│   │   └── 006_causal_schema.sql       Intervention tables
+│   │   └── 005_context_seed.sql        Sample context data
 │   └── requirements.txt           Python dependencies
 │
 └── dashboard/                      # Analytics UI (:3002)

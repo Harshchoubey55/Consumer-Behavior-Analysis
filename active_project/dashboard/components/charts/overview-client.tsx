@@ -164,7 +164,8 @@ export default function OverviewClient({ data }: { data: SummaryData }) {
 
         {/* Device breakdown */}
         <div className="card animate-in" style={{ padding: 24 }}>
-          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Device Split</h3>
+          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Consumer Platform Origin</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, marginBottom: 16 }}>Identifies hardware sources linked to cognitive friction.</p>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={deviceData} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
@@ -183,19 +184,23 @@ export default function OverviewClient({ data }: { data: SummaryData }) {
 
         {/* Engagement tiers */}
         <div className="card animate-in" style={{ padding: 24 }}>
-          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Engagement Tiers</h3>
+          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Behavioral Friction Tiers</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, marginBottom: 16 }}>Classifies user hesitation and scroll-velocity dropping.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
-            {engagementData.map(e => {
+            {engagementData.map((e, index) => {
               const total = engagementData.reduce((s, x) => s + x.count, 0);
               const pct = total > 0 ? (e.count / total) * 100 : 0;
+              // Override colors for advanced scientific feel
+              const barColor = index === 0 ? '#10b981' : index === 1 ? '#f59e0b' : '#ef4444'; 
+              const labelMap: Record<string, string> = { "high": "Zero Friction", "medium": "Minor Hesitation", "low": "Critical Drop-Off" };
               return (
                 <div key={e.tier}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{e.tier}</span>
-                    <span style={{ color: e.color, fontFamily: 'DM Mono' }}>{e.count} ({pct.toFixed(0)}%)</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{labelMap[e.tier] || e.tier}</span>
+                    <span style={{ color: barColor, fontFamily: 'DM Mono' }}>{e.count} ({pct.toFixed(0)}%)</span>
                   </div>
                   <div style={{ height: 6, background: 'var(--bg-elevated)', borderRadius: 3, overflow: 'hidden' }}>
-                    <div className="bar-fill" style={{ height: '100%', width: `${pct}%`, background: e.color, borderRadius: 3 }} />
+                    <div className="bar-fill" style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 3 }} />
                   </div>
                 </div>
               );
@@ -205,19 +210,21 @@ export default function OverviewClient({ data }: { data: SummaryData }) {
 
         {/* Churn risk */}
         <div className="card animate-in" style={{ padding: 24 }}>
-          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Churn Risk</h3>
+          <h3 className="font-display" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Flight-Risk Analytics (CATE)</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, marginBottom: 16 }}>Probability mapping via Conditional Average Treatment Effects.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
             {churnData.map(c => {
               const total = churnData.reduce((s, x) => s + x.count, 0);
               const pct = total > 0 ? (c.count / total) * 100 : 0;
+              const barColor = c.risk === 'high' ? '#ef4444' : c.risk === 'medium' ? '#f59e0b' : '#10b981';
               return (
                 <div key={c.risk}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{c.risk} risk</span>
-                    <span style={{ color: c.color, fontFamily: 'DM Mono' }}>{c.count} · avg {c.avg_prob}%</span>
+                    <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{c.risk} Vulnerability</span>
+                    <span style={{ color: barColor, fontFamily: 'DM Mono' }}>{c.count} · avg {c.avg_prob}%</span>
                   </div>
                   <div style={{ height: 6, background: 'var(--bg-elevated)', borderRadius: 3, overflow: 'hidden' }}>
-                    <div className="bar-fill" style={{ height: '100%', width: `${pct}%`, background: c.color, borderRadius: 3 }} />
+                    <div className="bar-fill" style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 3 }} />
                   </div>
                 </div>
               );

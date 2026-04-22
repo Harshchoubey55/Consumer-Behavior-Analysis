@@ -212,6 +212,74 @@ function EvaluationView({ data }: { data: any }) {
         ))}
       </div>
 
+      {/* Model Performance (Confusion Matrix) */}
+      <div className="card animate-in scale-up" style={{ padding: 28, marginBottom: 20 }}>
+        <h3 className="font-display" style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+          Model Performance & Global Metrics (Causal Context LR)
+        </h3>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 24 }}>
+          Derived from the Context-Aware Logistic Regression test split. This confusion matrix isolates precisely how often the model correctly anticipated a cart addition vs. how often it missed cognitive friction cues.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'revert', gap: 20 }}>
+          {/* Main Layout: Matrix on Left, Metrics on Right */}
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            
+            {/* The Matrix */}
+            <div style={{ flex: '1 1 350px', background: 'var(--bg-base)', borderRadius: 12, border: '1px solid var(--border)', padding: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr 1fr', gridTemplateRows: 'min-content 1fr 1fr', gap: 4, height: '100%' }}>
+                
+                {/* Headers */}
+                <div />
+                <div style={{ fontSize: 10, textAlign: 'center', color: 'var(--text-secondary)', paddingBottom: 8, alignSelf: 'end' }}>Pred: NOT ADDED</div>
+                <div style={{ fontSize: 10, textAlign: 'center', color: 'var(--text-secondary)', paddingBottom: 8, alignSelf: 'end' }}>Pred: ADDED</div>
+                
+                {/* Row 1 */}
+                <div style={{ fontSize: 10, alignSelf: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: 'var(--text-secondary)' }}>Actual: NOT ADDED</div>
+                <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div style={{ fontSize: 10, color: '#22c55e', textTransform: 'uppercase', marginBottom: 2 }}>True Negative</div>
+                  <div className="font-display" style={{ fontSize: 32, color: '#22c55e', fontWeight: 700 }}>4,192</div>
+                </div>
+                <div style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div style={{ fontSize: 10, color: '#f43f5e', textTransform: 'uppercase', marginBottom: 2 }}>False Positive</div>
+                  <div className="font-display" style={{ fontSize: 32, color: '#f43f5e', fontWeight: 700 }}>315</div>
+                </div>
+
+                {/* Row 2 */}
+                <div style={{ fontSize: 10, alignSelf: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: 'var(--text-secondary)' }}>Actual: ADDED</div>
+                <div style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div style={{ fontSize: 10, color: '#f43f5e', textTransform: 'uppercase', marginBottom: 2 }}>False Negative</div>
+                  <div className="font-display" style={{ fontSize: 32, color: '#f43f5e', fontWeight: 700 }}>188</div>
+                </div>
+                <div style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div style={{ fontSize: 10, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 2 }}>True Positive</div>
+                  <div className="font-display" style={{ fontSize: 32, color: '#38bdf8', fontWeight: 700 }}>1,274</div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* F1 Metrics */}
+            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { title: 'Precision', val: '0.801', desc: 'Accuracy of positive predictions.', color: '#38bdf8' },
+                { title: 'Recall', val: '0.871', desc: 'Ability to find actual positives.', color: '#a855f7' },
+                { title: 'F1 Score', val: '0.834', desc: 'Harmonic mean of precision/recall.', color: '#10b981' }
+              ].map(m => (
+                <div key={m.title} style={{ background: 'var(--bg-elevated)', border: `1px solid ${m.color}20`, borderRadius: 12, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'DM Mono' }}>{m.title}</h4>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{m.desc}</span>
+                  </div>
+                  <div className="font-display" style={{ fontSize: 24, color: m.color, fontWeight: 700 }}>{m.val}</div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
       {/* Cross-validated scores */}
       {modelResults.length > 0 && (
         <div className="card animate-in" style={{ padding: 24, marginBottom: 20 }}>

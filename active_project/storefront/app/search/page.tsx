@@ -1,64 +1,153 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { tracker } from 'lib/tracking/tracker';
+import { PRODUCTS_LIST, CATEGORIES } from 'lib/products';
+import { ProductCard } from 'components/ui/ProductCard';
 
-const ALL_PRODUCTS = [
-  { id: 'prod_001', name: 'Wireless Noise-Cancelling Headphones', price: 149, category: 'electronics' },
-  { id: 'prod_002', name: 'Ergonomic Office Chair', price: 349, category: 'furniture' },
-  { id: 'prod_003', name: 'Running Shoes Pro X', price: 89, category: 'footwear' },
-  { id: 'prod_004', name: 'Stainless Steel Water Bottle', price: 29, category: 'accessories' },
-  { id: 'prod_005', name: 'Smart Home Hub', price: 99, category: 'electronics' },
-  { id: 'prod_006', name: 'Yoga Mat Premium', price: 45, category: 'fitness' },
-  { id: 'prod_007', name: 'Leather Wallet Slim', price: 59, category: 'accessories' },
-  { id: 'prod_008', name: 'Mechanical Keyboard TKL', price: 129, category: 'electronics' },
-  { id: 'prod_009', name: 'Coffee Maker Deluxe', price: 79, category: 'kitchen' },
-  { id: 'prod_010', name: 'Sunglasses UV400', price: 39, category: 'accessories' },
-];
+function Stars({ rating }: { rating: number }) {
+  return (
+    <span className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg key={i} className={`h-3 w-3 ${i <= Math.round(rating) ? 'star-filled' : 'star-empty'}`} fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
 
-export default function SearchPage() {
+type SortMode = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
+
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  const [sort, setSort] = useState<SortMode>('relevance');
+  const [selectedCat, setSelectedCat] = useState<string>('');
 
   useEffect(() => {
     if (query) {
       tracker.search(query);
+      // If query matches a category slug exactly, filter by it
+      const catMatch = CATEGORIES.find((c) => c.slug === query.toLowerCase());
+      if (catMatch) setSelectedCat(catMatch.slug);
+      else setSelectedCat('');
+    } else {
+      setSelectedCat('');
     }
   }, [query]);
 
-  const filtered = query
-    ? ALL_PRODUCTS.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()) || p.category.includes(query.toLowerCase()))
-    : ALL_PRODUCTS;
+  const filtered = useMemo(() => {
+    let results = PRODUCTS_LIST;
+
+    if (selectedCat) {
+      results = results.filter((p) => p.categorySlug === selectedCat);
+    } else if (query) {
+      const q = query.toLowerCase();
+      results = results.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.categorySlug.includes(q) ||
+          p.description.toLowerCase().includes(q)
+      );
+    }
+
+    switch (sort) {
+      case 'price-asc':
+        return [...results].sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return [...results].sort((a, b) => b.price - a.price);
+      case 'rating':
+        return [...results].sort((a, b) => b.rating - a.rating);
+      default:
+        return results;
+    }
+  }, [query, sort, selectedCat]);
+
+  const handleCategoryClick = (slug: string) => {
+    tracker.categoryClick(slug);
+    setSelectedCat(slug === selectedCat ? '' : slug);
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">
-          {query ? `Results for "${query}"` : 'All Products'}
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+          {selectedCat
+            ? CATEGORIES.find((c) => c.slug === selectedCat)?.name || 'Products'
+            : query
+              ? `Results for "${query}"`
+              : 'All Products'}
         </h1>
-        <span className="text-sm text-slate-400">{filtered.length} products</span>
+        <p className="mt-1 text-sm text-stone-500">{filtered.length} products</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 md:gap-6">
-        {filtered.map((product) => (
-          <Link
-            key={product.id}
-            href={`/product/${product.id}`}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-all hover:border-indigo-200 hover:shadow-md"
+      {/* Filters bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { setSelectedCat(''); }}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+              !selectedCat ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
           >
-            <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
-              <span className="text-4xl opacity-30">📦</span>
-            </div>
-            <div className="p-4">
-              <span className="text-xs font-medium text-indigo-500 capitalize">{product.category}</span>
-              <h3 className="mt-1 text-sm font-semibold text-slate-800 line-clamp-2">{product.name}</h3>
-              <p className="mt-2 font-bold text-slate-900">${product.price}</p>
-            </div>
-          </Link>
-        ))}
+            All
+          </button>
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.slug}
+              onClick={() => handleCategoryClick(cat.slug)}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                selectedCat === cat.slug ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortMode)}
+          className="ml-auto rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-600 focus:outline-none"
+        >
+          <option value="relevance">Sort: Relevance</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="rating">Top Rated</option>
+        </select>
       </div>
+
+      {/* Grid */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <p className="text-stone-400">No products found.</p>
+          <Link href="/search" className="text-sm text-stone-600 underline underline-offset-4 hover:text-stone-900">
+            Browse all products
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 md:gap-5">
+          {filtered.map((product, idx) => (
+            <div key={product.id} onClick={() => tracker.categoryClick(product.categorySlug)}>
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-16 text-center text-stone-400">Loading products...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

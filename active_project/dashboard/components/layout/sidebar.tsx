@@ -16,7 +16,7 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside style={{ width:220,flexShrink:0,background:'var(--bg-surface)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',position:'sticky',top:0,height:'100vh',overflow:'hidden' }}>
+    <aside style={{ width:220,flexShrink:0,background:'rgba(15, 17, 23, 0.5)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderRight:'1px solid rgba(255, 255, 255, 0.05)',display:'flex',flexDirection:'column',position:'sticky',top:0,height:'100vh',overflow:'hidden',zIndex:50 }}>
       <div style={{ padding:'24px 20px 20px',borderBottom:'1px solid var(--border)' }}>
         <div className="font-display" style={{ fontSize:18,fontWeight:800,letterSpacing:'-0.02em',color:'var(--text-primary)' }}>
           Behavior<span style={{ color:'var(--accent-blue)' }}>Lens</span>

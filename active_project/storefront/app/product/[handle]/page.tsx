@@ -3,21 +3,28 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { tracker, registerMicroHesitation } from 'lib/tracking/tracker';
 import { useIntervention } from '../../../components/tracking/InterventionProvider';
+import { useCart } from 'components/cart/CartProvider';
+import { PRODUCTS, getRelatedProducts } from 'lib/products';
+import type { Product } from 'lib/products';
+import { ProductCard } from 'components/ui/ProductCard';
+import { RecentlyViewed, trackRecentlyViewed } from 'components/ui/RecentlyViewed';
+import { WishlistButton } from 'components/ui/WishlistButton';
 
-const PRODUCTS: Record<string, { id: string; name: string; price: number; category: string; description: string; features: string[] }> = {
-  prod_001: { id: 'prod_001', name: 'Wireless Noise-Cancelling Headphones', price: 149, category: 'Electronics', description: 'Premium audio experience with industry-leading noise cancellation. Up to 30 hours battery life, foldable design, and plush ear cushions for all-day comfort.', features: ['Active Noise Cancellation', '30hr Battery Life', 'USB-C Charging', 'Multipoint Connection', 'Foldable Design'] },
-  prod_002: { id: 'prod_002', name: 'Ergonomic Office Chair', price: 349, category: 'Furniture', description: 'Fully adjustable ergonomic chair designed for long work sessions. Lumbar support, breathable mesh back, and 4D armrests.', features: ['Lumbar Support', 'Breathable Mesh', '4D Armrests', 'Height Adjustable', '5-Year Warranty'] },
-  prod_003: { id: 'prod_003', name: 'Running Shoes Pro X', price: 89, category: 'Footwear', description: 'Lightweight running shoes with responsive cushioning and durable outsole. Engineered for performance runners.', features: ['Responsive Foam', 'Breathable Upper', 'Anti-slip Outsole', 'Lightweight 220g', 'Wide Toe Box'] },
-  prod_004: { id: 'prod_004', name: 'Stainless Steel Water Bottle', price: 29, category: 'Accessories', description: 'Double-wall vacuum insulation keeps drinks cold 24hrs or hot 12hrs. BPA-free and dishwasher safe.', features: ['24hr Cold / 12hr Hot', 'BPA Free', '750ml Capacity', 'Leak-Proof Lid', 'Dishwasher Safe'] },
-  prod_005: { id: 'prod_005', name: 'Smart Home Hub', price: 99, category: 'Electronics', description: 'Control all your smart home devices from one central hub. Compatible with 10,000+ devices across all major platforms.', features: ['Works with Alexa/Google', '10,000+ Compatible Devices', 'Zigbee + Z-Wave + WiFi', 'Local Processing', 'Mobile App'] },
-  prod_006: { id: 'prod_006', name: 'Yoga Mat Premium', price: 45, category: 'Fitness', description: 'Non-slip, extra-thick yoga mat with alignment lines. Eco-friendly natural rubber with moisture-wicking surface.', features: ['6mm Thickness', 'Non-slip Surface', 'Alignment Lines', 'Eco Natural Rubber', 'Carry Strap Included'] },
-  prod_007: { id: 'prod_007', name: 'Leather Wallet Slim', price: 59, category: 'Accessories', description: 'Minimalist genuine leather bifold wallet. Holds 6+ cards with RFID blocking protection.', features: ['Genuine Leather', 'RFID Blocking', '6+ Card Slots', 'Slim Profile 6mm', 'Gift Box Included'] },
-  prod_008: { id: 'prod_008', name: 'Mechanical Keyboard TKL', price: 129, category: 'Electronics', description: 'Tenkeyless mechanical keyboard with hot-swappable switches. Per-key RGB backlighting and aircraft-grade aluminum frame.', features: ['Hot-Swap Switches', 'Per-Key RGB', 'Aluminum Frame', 'USB-C Detachable', 'N-Key Rollover'] },
-  prod_009: { id: 'prod_009', name: 'Coffee Maker Deluxe', price: 79, category: 'Kitchen', description: 'Programmable 12-cup coffee maker with built-in grinder and thermal carafe. Wake up to freshly ground coffee.', features: ['Built-in Grinder', '12-Cup Thermal Carafe', 'Programmable Timer', 'Brew Strength Control', 'Auto Shutoff'] },
-  prod_010: { id: 'prod_010', name: 'Sunglasses UV400', price: 39, category: 'Accessories', description: 'Classic polarized sunglasses with UV400 protection. Lightweight TR90 frame available in multiple colorways.', features: ['Polarized Lenses', 'UV400 Protection', 'TR90 Frame', 'Anti-Scratch Coating', 'Case Included'] },
-};
+function Stars({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
+  const cls = size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+  return (
+    <span className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg key={i} className={`${cls} ${i <= Math.round(rating) ? 'star-filled' : 'star-empty'}`} fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
 
 export default function ProductPage() {
   const params = useParams();
@@ -26,13 +33,12 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [hoverStartTime, setHoverStartTime] = useState<number | null>(null);
-
-  // Wire into the intervention system (Finding 5 fix)
+  const { addItem } = useCart();
   const { setCurrentProduct } = useIntervention();
+  const related = product ? getRelatedProducts(product.id) : [];
 
   useEffect(() => {
     if (product) {
-      // Set current product in intervention context so popups show real data
       setCurrentProduct({
         id: product.id,
         name: product.name,
@@ -45,19 +51,20 @@ export default function ProductPage() {
         id: product.id,
         title: product.name,
         price: product.price,
-        category: product.category
+        category: product.category,
       });
+      trackRecentlyViewed(product);
     }
-
-    // Clear product context when leaving the page
     return () => setCurrentProduct(null);
   }, [handle, product, setCurrentProduct]);
 
   if (!product) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
-        <p className="text-slate-500">Product not found</p>
-        <Link href="/search" className="text-indigo-600 underline">Back to search</Link>
+        <p className="text-stone-500">Product not found</p>
+        <Link href="/search" className="text-sm text-stone-700 underline underline-offset-4">
+          Browse all products
+        </Link>
       </div>
     );
   }
@@ -68,18 +75,20 @@ export default function ProductPage() {
       title: product.name,
       price: product.price,
       quantity: quantity,
-      category: product.category
+      category: product.category,
     });
+    addItem(
+      { id: product.id, name: product.name, price: product.price, image: product.image, category: product.category },
+      quantity
+    );
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   const handleMouseEnter = () => setHoverStartTime(Date.now());
   const handleMouseLeave = () => {
-    if (hoverStartTime) {
-      if (Date.now() - hoverStartTime > 1000) {
-        registerMicroHesitation();
-      }
+    if (hoverStartTime && Date.now() - hoverStartTime > 1000) {
+      registerMicroHesitation();
     }
     setHoverStartTime(null);
   };
@@ -87,37 +96,63 @@ export default function ProductPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
       {/* Breadcrumb */}
-      <nav className="mb-8 flex items-center gap-2 text-sm text-slate-400">
-        <Link href="/" className="hover:text-slate-700">Home</Link>
+      <nav className="mb-8 flex items-center gap-2 text-sm text-stone-400">
+        <Link href="/" className="transition-colors hover:text-stone-700">Home</Link>
         <span>/</span>
-        <Link href="/search" className="hover:text-slate-700">Products</Link>
+        <Link href="/search" className="transition-colors hover:text-stone-700">Products</Link>
         <span>/</span>
-        <span className="text-slate-700">{product.name}</span>
+        <span className="text-stone-600">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 md:grid-cols-2">
-        {/* Image placeholder */}
-        <div className="flex aspect-square items-center justify-center rounded-3xl bg-gradient-to-br from-slate-100 to-slate-50 text-8xl">
-          📦
+      <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
+        {/* Product image */}
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-stone-100">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+          />
+          {product.badge && (
+            <span className="absolute left-4 top-4 rounded-full bg-stone-900 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+              {product.badge}
+            </span>
+          )}
+          <div className="absolute right-4 top-4">
+             <WishlistButton product={product} />
+          </div>
         </div>
 
-        {/* Info */}
+        {/* Product info */}
         <div className="flex flex-col gap-5">
           <div>
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+            <span className="text-xs font-medium uppercase tracking-[0.15em] text-stone-400">
               {product.category}
             </span>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{product.name}</h1>
-            <p className="mt-3 text-3xl font-bold text-indigo-600">${product.price}</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 md:text-3xl">
+              {product.name}
+            </h1>
+            <div className="mt-3 flex items-center gap-3">
+              <Stars rating={product.rating} size="md" />
+              <span className="text-sm text-stone-500">{product.rating} ({product.reviewCount} reviews)</span>
+            </div>
+            <div className="mt-4 flex items-baseline gap-3">
+              <p className="text-2xl font-semibold text-stone-900">₹{product.price}</p>
+              {product.originalPrice && (
+                <p className="text-base text-stone-400 line-through">₹{product.originalPrice}</p>
+              )}
+            </div>
           </div>
 
-          <p className="text-slate-600 leading-relaxed">{product.description}</p>
+          <p className="text-sm leading-relaxed text-stone-600">{product.description}</p>
 
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {product.features.map((f) => (
-              <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
-                <svg className="h-4 w-4 shrink-0 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <li key={f} className="flex items-center gap-2.5 text-sm text-stone-700">
+                <svg className="h-4 w-4 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                 </svg>
                 {f}
               </li>
@@ -126,32 +161,70 @@ export default function ProductPage() {
 
           {/* Quantity */}
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700">Qty:</label>
-            <div className="flex items-center rounded-xl border border-slate-200">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 text-slate-500 hover:text-slate-900">−</button>
-              <span className="min-w-[32px] text-center text-sm font-semibold">{quantity}</span>
-              <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 text-slate-500 hover:text-slate-900">+</button>
+            <span className="text-sm font-medium text-stone-700">Quantity</span>
+            <div className="flex items-center rounded-lg border border-stone-200">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="px-3.5 py-2 text-stone-500 transition-colors hover:text-stone-900"
+              >
+                −
+              </button>
+              <span className="min-w-[36px] text-center text-sm font-semibold">{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="px-3.5 py-2 text-stone-500 transition-colors hover:text-stone-900"
+              >
+                +
+              </button>
             </div>
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className={`rounded-xl py-4 text-sm font-semibold transition-all ${
-              added
-                ? 'bg-green-600 text-white'
-                : 'bg-slate-900 text-white hover:bg-slate-700'
-            }`}
-          >
-            {added ? '✓ Added to Cart' : 'Add to Cart'}
-          </button>
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleAddToCart}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              className={`btn-press flex-1 rounded-xl py-4 text-sm font-semibold transition-all ${
+                added
+                  ? 'bg-green-700 text-white'
+                  : 'bg-stone-900 text-white hover:bg-stone-800'
+              }`}
+            >
+              {added ? '✓ Added to Cart' : 'Add to Cart'}
+            </button>
+            <Link
+              href="/cart"
+              onClick={handleAddToCart}
+              className="btn-press rounded-xl border border-stone-300 px-6 py-4 text-sm font-semibold text-stone-700 transition-colors hover:border-stone-500 hover:bg-stone-50"
+            >
+              Buy Now
+            </Link>
+          </div>
 
-          <p className="text-xs text-slate-400 text-center">
-            This interaction is being tracked by the analytics system
-          </p>
+          {/* Shipping info */}
+          <div className="flex items-center gap-2 text-xs text-stone-500">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+            Free shipping on orders over ₹4000 · 30-day returns
+          </div>
         </div>
       </div>
+
+      {/* Related products */}
+      {related.length > 0 && (
+        <section className="mt-20">
+          <h2 className="mb-6 text-lg font-semibold tracking-tight text-stone-900">You might also like</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:gap-5">
+            {related.map((rp) => (
+              <ProductCard key={rp.id} product={rp} />
+            ))}
+          </div>
+        </section>
+      )}
+      
+      <RecentlyViewed />
     </div>
   );
 }
