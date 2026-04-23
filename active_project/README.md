@@ -1,12 +1,11 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=soft&color=0:6e40c9,100:2563eb&height=150&section=header&text=Cognitive%20Analytics%20Engine&fontSize=38&fontColor=ffffff&fontAlignY=45&desc=active_project%20%E2%80%94%20The%20Behavioral%20Intelligence%20System&descSize=16&descAlignY=70&animation=twinkling" width="100%"/>
+<img src="./storefront/public/readme_banner.png" width="100%"/>
 
 <p>
-<img src="https://img.shields.io/badge/Services-5-6e40c9?style=for-the-badge" alt="Services"/>
-<img src="https://img.shields.io/badge/API_Endpoints-12-2563eb?style=for-the-badge" alt="Endpoints"/>
-<img src="https://img.shields.io/badge/Pipeline_Stages-8-059669?style=for-the-badge" alt="Pipeline"/>
-<img src="https://img.shields.io/badge/ML_Models-3-dc2626?style=for-the-badge" alt="Models"/>
+<img src="https://img.shields.io/badge/Storefront-Cinematic-7c3aed?style=for-the-badge" alt="Storefront"/>
+<img src="https://img.shields.io/badge/Dashboard-Research_Grade-2563eb?style=for-the-badge" alt="Dashboard"/>
+<img src="https://img.shields.io/badge/Causal_ML-IPW_CATE-059669?style=for-the-badge" alt="ML"/>
 </p>
 
 </div>
@@ -15,7 +14,7 @@
 
 ## 🔍 Overview
 
-This is the **core analytics system** — a self-contained behavioral intelligence platform that sits alongside the Medusa e-commerce infrastructure. It captures every user micro-interaction, processes it through ML pipelines, and surfaces insights that explain **why** users behave the way they do.
+ZeroError is a **High-End Behavioral Intelligence Platform**. It transforms standard e-commerce into a premium, cinematic "Scrollytelling" experience while simultaneously powering a research-grade analytical command center that visualizes causal model performance through advanced metrics and confusion matrices.
 
 ---
 
@@ -56,11 +55,11 @@ graph TB
 
 | Service | Port | Language | Role |
 |:---|:---:|:---:|---|
-| **Storefront** | 3000 | TypeScript / Next.js | Instrumented e-commerce frontend with behavioral tracker |
-| **Analytics API** | 3001 | TypeScript / Next.js | Event ingestion, risk scoring, analytics REST API |
-| **Dashboard** | 3002 | TypeScript / Next.js | 9-view analytics command center |
-| **Analytics Engine** | — | Python | 8-stage ML processing pipeline |
-| **PostgreSQL** | 5432 | SQL | Event storage + computed analytics |
+| **Storefront** | 3000 | Next.js 14 | Cinematic "Apple-grade" scroll-driven product reveal engine |
+| **Analytics API** | 3001 | Node.js | Unified event ingestion and causal decision server |
+| **Dashboard** | 3002 | Next.js 14 | Research-grade Command Center with Confusion Matrix & Telemetry |
+| **Analytics Engine** | — | Python | Causal ML (IPW/CATE) & Markov processing pipeline |
+| **PostgreSQL** | 5432 | SQL | High-fidelity interaction storage |
 
 ---
 
@@ -249,21 +248,20 @@ cd storefront && cp .env.example .env && npm install && npm run dev
 active_project/
 ├── docker-compose.yml              # 5-service orchestration
 │
-├── storefront/                     # Instrumented storefront (:3000)
+├── storefront/                     # Cinematic Storefront (:3000)
 │   ├── app/
-│   │   ├── page.tsx                    Homepage with product grid
+│   │   ├── page.tsx                    Scrollytelling Hero (1200vh)
 │   │   ├── product/[handle]/           Product detail page
-│   │   ├── search/                     Search functionality
-│   │   ├── dashboard/page.tsx          Embedded mini-dashboard (37KB)
-│   │   └── api/                        Proxy API routes
-│   ├── components/tracking/
-│   │   ├── InterventionProvider.tsx     ★ Real-time intervention UI
-│   │   ├── page-tracker.tsx            Auto page_view events
-│   │   └── product-view-tracker.tsx    Detailed product_view events
+│   │   └── search/                     Advanced search grid
+│   ├── components/
+│   │   ├── ui/
+│   │   │   └── ScrollytellingHero.tsx  ★ 10-category radial wheel
+│   │   └── tracking/
+│   │       ├── InterventionProvider.tsx ★ Real-time UI interventions
+│   │       └── page-tracker.tsx         Behavioral capture logic
 │   └── lib/
-│       ├── tracking/tracker.ts         ★ Core behavioral tracker (15KB)
-│       ├── analytics/processor.ts      Client-side analytics (13KB)
-│       └── db.ts                       Database connection
+│       ├── products.ts                  Handcrafted HD product database
+│       └── tracking/tracker.ts          Premium interaction tracker
 │
 ├── analytics-api/                  # REST API (:3001)
 │   ├── app/api/
@@ -316,12 +314,22 @@ active_project/
 
 ---
 
+## 🗺️ Roadmap
+
+- [x] **Phase 1-6**: Core Analytics & Causal Infrastructure.
+- [x] **Phase 7**: Cinematic Storefront Overhaul (Radial Wheel + Scrollytelling).
+- [x] **Phase 8**: Research-Grade Dashboard (Confusion Matrix, Precision/Recall).
+- [ ] **Phase 9**: Multi-Variant A/B Testing for Interventions.
+- [ ] **Phase 10**: Dynamic Visual Assets generated per-user session history.
+
+---
+
 ## 📄 License
 
 MIT
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6e40c9,100:2563eb&height=100&section=footer" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=7c3aed&height=100&section=footer" width="100%"/>
 
 </div>
