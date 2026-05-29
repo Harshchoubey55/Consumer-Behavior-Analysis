@@ -1,339 +1,161 @@
 <div align="center">
 
-<!-- Animated header using capsule render -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:161b22,100:6e40c9&height=230&section=header&text=Consumer%20Behavior%20%26%20Pattern%20Analysis&fontSize=36&fontColor=ffffff&fontAlignY=35&desc=Real-time%20Cognitive%20Adaptive%20Analytics%20%E2%80%A2%20Causal%20ML%20%E2%80%A2%20Behavioral%20Intelligence&descSize=16&descAlignY=55&animation=fadeIn" width="100%"/>
+# Consumer Behavior Analysis & Federated Phenotyping
 
-<br/>
-
-<!-- Animated typing effect -->
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=3000&pause=1000&color=A78BFA&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=Most+analytics+tell+you+WHAT+users+did.;This+tells+you+WHY+%E2%80%94+with+causal+ML." alt="Typing SVG" /></a>
-
-<br/>
-
-<!-- Tech badges -->
 <p>
-<img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js"/>
-<img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
-<img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
-<img src="https://img.shields.io/badge/MedusaJS-v2-7C3AED?style=for-the-badge&logo=medusa&logoColor=white" alt="MedusaJS"/>
-<img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
-<img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
-</p>
-
-<!-- Status badges -->
-<p>
-<img src="https://img.shields.io/badge/status-active%20development-brightgreen?style=flat-square" alt="Status"/>
-<img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"/>
-<img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs Welcome"/>
+<img src="https://img.shields.io/badge/Storefront-Next.js_14-7c3aed?style=for-the-badge&logo=next.js" alt="Storefront"/>
+<img src="https://img.shields.io/badge/Dashboard-React-2563eb?style=for-the-badge&logo=react" alt="Dashboard"/>
+<img src="https://img.shields.io/badge/Backend-Python_Agents-059669?style=for-the-badge&logo=python" alt="Agents"/>
+<img src="https://img.shields.io/badge/ML-FedAvg_Learning-e11d48?style=for-the-badge" alt="FedAvg"/>
 </p>
 
 </div>
 
----
+## Overview
 
-## 🧠 What Is This?
-
-An **end-to-end behavioral intelligence platform** built on top of a real MedusaJS e-commerce store. It captures every user micro-interaction, reconstructs the **full decision context** at each moment, models sessions as **Markov chains**, applies **causal machine learning**, and surfaces insights through a research-grade dashboard.
-
-> **The Novel Contribution:** Standard analytics records that a user viewed a product and didn't buy.
-> This system also records *how many products they'd already seen, what prices they'd been exposed to, how expensive this product looked relative to their session history, how long they hesitated, and whether they arrived via search or browse* — then uses causal ML to determine **why** they didn't convert and **intervenes in real-time** to change the outcome.
+This project is a full-stack behavioral intelligence platform. It tracks user interactions in a live e-commerce environment (via the **ZeroError** storefront) and processes that data through an autonomous, agent-based machine learning pipeline. The project is designed to evaluate consumer decisions using context reconstruction, sequence modeling, and federated learning, providing real-time causal insights without compromising raw user privacy.
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Key Capabilities
+
+| Capability | Description |
+|:---|:---|
+| **Autonomous Agent Pipeline** | A Python-based orchestrator that resolves dependencies and executes analytical tasks (sessionization, context analysis, sequence modeling) in parallel. |
+| **Federated Phenotyping (FedAvg)** | Groups users into behavioral archetypes using a local logistic regression model trained in the browser. Only sparse gradient updates (delta weights) are sent to the server. |
+| **Contextual Decision Reconstruction** | Analyzes what a user saw *before* making a decision (e.g. tracking if a product was viewed immediately after a much cheaper alternative). |
+| **Markov Sequence Modeling** | Treats user sessions as state sequences to calculate transition probability matrices and flag anomalous navigational paths. |
+| **IPW Causal Inference** | Evaluates the true effectiveness of UI interventions (like discount nudges) using Inverse Probability Weighting to remove selection bias. |
+
+---
+
+## 🏛️ System Architecture
+
+The platform operates across four primary layers: Frontend (Next.js), Backend API (Node.js), Database (PostgreSQL), and the ML Engine (Python).
 
 ```mermaid
 graph TB
-    subgraph Customer["👤 Customer Layer"]
-        SF["🛍️ Instrumented Storefront\n:3000"]
+    subgraph FRONTEND["Frontend Layer (Next.js)"]
+        direction LR
+        SF["🛍️ ZeroError Storefront (Port 3000)<br>Captures behavioral context"]
+        DASH["📊 Dashboard (Port 3002)<br>Visualizes ML telemetry"]
     end
 
-    subgraph Ingestion["⚡ Ingestion Layer"]
-        API["📡 Analytics API\n:3001"]
+    subgraph BACKEND["Backend Layer (Node.js)"]
+        API["📡 Analytics API (Port 3001)<br>Ingests events & serves global models"]
     end
 
-    subgraph Storage["💾 Storage Layer"]
-        PG[("🐘 PostgreSQL 16\n:5432")]
+    subgraph DATA["Data Layer (PostgreSQL 16)"]
+        PG[("🐘 Relational DB (Port 5432)<br>Stores sequences & federated weights")]
     end
 
-    subgraph Intelligence["🧪 Intelligence Layer"]
-        ENG["🐍 Analytics Engine\nPython ML Pipeline"]
-        CB["🎰 Causal Bandit"]
-        EVAL["📊 Evaluation Engine"]
+    subgraph ML["Intelligence Layer (Python)"]
+        ENG["🤖 Autonomous Agent Orchestrator<br>Executes parallel data pipelines"]
     end
 
-    subgraph Visualization["📈 Visualization Layer"]
-        DASH["📊 Analytics Dashboard\n:3002"]
-    end
-
-    subgraph Commerce["🏪 Commerce Layer"]
-        MB["🔧 Medusa Backend\n:9000"]
-    end
-
-    SF -->|"page_view, scroll_depth,\nhesitation, add_to_cart"| API
-    SF -->|"GET /api/score"| API
-    API -->|"INSERT events"| PG
-    API -.->|"risk score + intervention"| SF
-    ENG -->|"Read events → Compute → Write results"| PG
-    CB -.->|"Select intervention arm"| ENG
-    EVAL -.->|"IPW / CATE uplift"| ENG
-    DASH -->|"GET /api/analytics/*"| API
-    API -->|"SELECT"| PG
-    SF <-->|"Products, Cart, Orders"| MB
-    MB -->|"Commerce data"| PG
+    SF -- "1. Raw events & federated gradients" --> API
+    SF -. "2. Fetch global model" .-> API
+    DASH -- "3. Fetch analytical metrics" --> API
+    API -- "4. Read/Write" --> PG
+    ENG -- "5. Process Data" --> PG
 
     style SF fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style DASH fill:#7c3aed,stroke:#5b21b6,color:#fff
     style API fill:#2563eb,stroke:#1d4ed8,color:#fff
     style PG fill:#4169e1,stroke:#2b4acb,color:#fff
     style ENG fill:#059669,stroke:#047857,color:#fff
-    style CB fill:#d97706,stroke:#b45309,color:#fff
-    style EVAL fill:#dc2626,stroke:#b91c1c,color:#fff
-    style DASH fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style MB fill:#6b7280,stroke:#4b5563,color:#fff
 ```
 
 ---
 
-## ✨ Key Features
+## 🧠 Deep Dive: The Machine Learning Pipeline
 
-<table>
-<tr>
-<td width="50%">
-
-### 🔬 Contextual Decision Reconstruction
-
-When a user doesn't convert, standard analytics sees **one event**. This system reconstructs the full situational context:
-
-- 📦 How many products they'd already viewed
-- 💰 Price anchoring relative to session history
-- ⏱️ Time spent and scroll depth
-- 🔍 Search vs. browse arrival intent
-- 📉 Context-conditional conversion rates
-- 🧪 Chi-squared significance testing
-
-> *Same product viewed first → 31% conversion.*
-> *Viewed after 5 others → 8%. A 4× difference invisible to aggregate metrics.*
-
-</td>
-<td width="50%">
-
-### ⛓️ Sequential Behavioral Modeling
-
-Sessions are **Markov chains**, not event counts:
+### 1. The Autonomous Agent Orchestrator
+Rather than running a sequential script, the backend operates as a multi-agent system. If one agent encounters a data shortage, it halts safely while non-dependent agents continue processing.
 
 ```mermaid
-graph LR
-    B["Browse"] -->|"0.62"| V["View"]
-    V -->|"0.28"| C["Cart"]
-    C -->|"0.45"| P["Purchase"]
-    V -->|"0.15"| V
-    V -->|"0.57"| B
-    C -->|"0.55"| B
-
-    style B fill:#3b82f6,stroke:#2563eb,color:#fff
-    style V fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style C fill:#f59e0b,stroke:#d97706,color:#fff
-    style P fill:#10b981,stroke:#059669,color:#fff
+graph TD
+    subgraph ORCH["Agent Dependency Graph"]
+    direction TB
+    SESS["Sessionization Agent"]
+    PROD["Product Analytics Agent"]
+    USR["User Feature Agent"]
+    SEQ["Sequence Model Agent"]
+    ANO["Anomaly Detection Agent"]
+    CTX["Context Analysis Agent"]
+    PHENO["Phenotype Classifier Agent"]
+    EVAL["IPW Evaluation Agent"]
+    FED["FedAvg Aggregation Agent"]
+    
+    SESS --> PROD
+    SESS --> USR
+    PROD --> CTX
+    SESS --> CTX
+    SEQ --> ANO
+    CTX --> PHENO
+    CTX --> EVAL
+    PHENO --> FED
+    end
 ```
 
-- Transition probability matrices
-- Per-transition conversion lift
-- Common path mining
-- Anomaly detection on low-probability sessions
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### 🎯 Real-time Causal Interventions
-
-A **Contextual Bandit** model detects cognitive friction and triggers UI interventions in real-time:
-
-- 🧠 Detects comparison fatigue, price shock, attention decay
-- 💡 Selects optimal intervention (discount, urgency, recommendation)
-- 📊 Measures causal uplift with IPW/CATE estimation
-- 🔄 Continuously learns from outcomes
-
-</td>
-<td width="50%">
-
-### 📊 In-Session Risk Scoring
-
-After every state transition, the tracker calls `/api/score`:
-
-```
-User scrolls past fold
-  → tracker detects hesitation
-  → Markov scorer: P(abandon) = 0.73
-  → Causal Bandit: show "10% off" nudge
-  → InterventionProvider renders overlay
-  → Outcome logged → bandit updates
-```
-
-Hook into it: `tracker.onRiskUpdate(callback)`
-
-</td>
-</tr>
-</table>
+### 2. Federated Learning (FedAvg) Workflow
+To classify users without storing their raw clickstreams centrally, the project implements a federated learning architecture:
+1. **Local Training:** The Next.js storefront trains a 15-parameter logistic regression model entirely in the user's browser based on their scrolling and clicking context.
+2. **Gradient Extraction:** Upon session exit, the model calculates the top 7 gradient updates (delta weights).
+3. **Transmission:** Only these sparse, anonymous mathematical updates are sent to the Node.js API.
+4. **Aggregation:** The Python `FedAvg Aggregation Agent` averages these updates into a global model and clusters the gradients to assign users to behavioral phenotypes (e.g., "Comparison Shoppers").
 
 ---
 
-## 📁 Repository Structure
+## 📡 API Reference
 
-```
-📦 Realtime-Consumer-Behavior-and-Pattern-Analysis
-│
-├── 🧠 active_project/                    ★ THE ANALYTICS SYSTEM ★
-│   ├── docker-compose.yml                 One-command orchestration
-│   │
-│   ├── 🛍️ storefront/                    Instrumented e-commerce frontend
-│   │   ├── lib/tracking/tracker.ts        Behavioral event capture engine
-│   │   ├── lib/analytics/processor.ts     Client-side analytics processor
-│   │   ├── components/tracking/           Intervention UI components
-│   │   └── app/                           Next.js pages + API routes
-│   │
-│   ├── 📡 analytics-api/                  Event ingestion + REST API
-│   │   ├── app/api/events/                Raw event ingestion
-│   │   ├── app/api/score/                 Real-time risk scoring
-│   │   ├── app/api/analytics/             9 analytics endpoints
-│   │   └── lib/db.ts                      PostgreSQL connection
-│   │
-│   ├── 🐍 analytics-engine/              Python ML pipeline
-│   │   ├── processors/pipeline.py         8-stage processing orchestrator
-│   │   ├── processors/sequence_modeler.py Markov chain modeling
-│   │   ├── processors/context_analyzer.py Contextual decision reconstruction
-│   │   ├── processors/causal_bandit.py    Contextual bandit for interventions
-│   │   ├── processors/evaluation_engine.py IPW/CATE causal evaluation
-│   │   └── sql/                           6 schema migration files
-│   │
-│   └── 📊 dashboard/                     Analytics command center
-│       ├── app/                           9 dashboard views
-│       └── components/charts/             Visualization components
-│
-├── 🔧 medusa-backend/                    MedusaJS v2 commerce engine
-│   └── src/                               Custom modules, API routes, workflows
-│
-├── 🏪 medusa-backend-storefront/         Medusa storefront template
-│   └── src/                               Pages, middleware, modules
-│
-├── 🛒 app/ + components/ + lib/          Legacy storefront (v1)
-└── 📄 .gitignore, package.json, configs
-```
+The Node.js backend exposes the following primary endpoints for the Storefront and Dashboard:
+
+| Endpoint | Method | Purpose |
+|:---|:---:|:---|
+| `/api/events` | `POST` | Ingests raw behavioral events (clicks, views). |
+| `/api/context-events` | `POST` | Ingests enriched events containing prior viewing context. |
+| `/api/fedavg-update` | `POST` | Receives sparse gradient updates from the browser's local model. |
+| `/api/global-model` | `GET` | Serves aggregated global model weights for client initialization. |
+| `/api/analytics/agents` | `GET` | Returns execution logs, health, and status of all Python agents. |
+| `/api/analytics/phenotypes` | `GET` | Returns behavioral archetypes, cluster centroids, and federated groupings. |
+| `/api/analytics/anomalies` | `GET` | Identifies suspicious session paths using Z-Score calculations. |
+| `/api/analytics/evaluation` | `GET` | Returns causal evaluation metrics (IPW/CATE) for UI interventions. |
 
 ---
 
-## 🐍 Analytics Pipeline
+## 💻 Getting Started
 
-The Python engine runs an **8-stage pipeline** that transforms raw events into actionable intelligence:
+### Prerequisites
+* Docker and Docker Compose (Recommended)
+* Node.js v18+ (For manual setup)
+* Python 3.10+ (For manual setup)
+* PostgreSQL 16+ (For manual setup)
 
-```mermaid
-graph LR
-    S1["1️⃣ Sessionize\nRaw Events"] --> S2["2️⃣ Product\nAnalytics"]
-    S2 --> S3["3️⃣ User\nFeatures"]
-    S3 --> S4["4️⃣ Daily\nKPIs"]
-    S4 --> S5["5️⃣ Conversion\nFunnel"]
-    S5 --> S6["6️⃣ Prescriptive\nRules"]
-    S6 --> S7["7️⃣ Markov\nChains"]
-    S7 --> S8["8️⃣ Context\nReconstruction"]
+### Option A: Docker Installation (Recommended)
 
-    style S1 fill:#3b82f6,stroke:#2563eb,color:#fff
-    style S2 fill:#3b82f6,stroke:#2563eb,color:#fff
-    style S3 fill:#3b82f6,stroke:#2563eb,color:#fff
-    style S4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style S5 fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style S6 fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style S7 fill:#f59e0b,stroke:#d97706,color:#fff
-    style S8 fill:#ef4444,stroke:#dc2626,color:#fff
-```
+1. Clone the repository and navigate to the `active_project` folder.
+2. Run the following command to build and launch all containers:
+   ```bash
+   docker compose up --build
+   ```
+3. The services will initialize and become available at:
+   * **Storefront:** http://localhost:3000
+   * **Dashboard:** http://localhost:3002
+   * **Analytics API:** http://localhost:3001
+   * **Database:** localhost:5432
 
-| Stage | Processor | Input → Output |
-|:---:|---|---|
-| 1️⃣ | `refresh_sessions` | Raw events → Sessions (30-min inactivity window) |
-| 2️⃣ | `refresh_product_analytics` | Sessions → Per-product: views, cart rate, avg time, scroll depth |
-| 3️⃣ | `compute_user_features` | Sessions → RFM scores, churn risk, engagement tiers |
-| 4️⃣ | `refresh_daily_kpis` | All data → Time-series KPI snapshots |
-| 5️⃣ | `refresh_funnel` | Sessions → Funnel state counts (Browse→View→Cart→Purchase) |
-| 6️⃣ | `generate_recommendations` | Analytics → Rule-based prescriptive recommendations |
-| 7️⃣ | `run_sequence_pipeline` | Sessions → **Markov transition matrices, path mining, anomalies** |
-| 8️⃣ | `run_context_pipeline` | Events → **Contextual decision reconstruction, contrastive insights** |
+### Option B: Manual Setup
 
----
-
-## 📊 Dashboard Views
-
-<table>
-<tr>
-<td align="center" width="33%">
-<b>📈 Overview</b><br/>
-<sub>Real-time KPIs, session counts, conversion rates, revenue</sub>
-</td>
-<td align="center" width="33%">
-<b>👥 Sessions</b><br/>
-<sub>Session timeline, engagement breakdown, duration analysis</sub>
-</td>
-<td align="center" width="33%">
-<b>📦 Products</b><br/>
-<sub>Per-product performance, views vs. conversion, engagement heatmap</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="33%">
-<b>🔻 Funnel</b><br/>
-<sub>Visual conversion funnel with drop-off analysis</sub>
-</td>
-<td align="center" width="33%">
-<b>🗺️ Paths</b><br/>
-<sub>Markov chain visualization, common journeys, anomalies</sub>
-</td>
-<td align="center" width="33%">
-<b>🔮 Predictions</b><br/>
-<sub>ML churn predictions, engagement forecasting</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="33%">
-<b>💡 Recommendations</b><br/>
-<sub>Auto-generated prescriptive actions</sub>
-</td>
-<td align="center" width="33%">
-<b>🧠 Context Analysis</b><br/>
-<sub>Context-conditional conversion heatmaps, contrastive insights</sub>
-</td>
-<td align="center" width="33%">
-<b>⚗️ Causal Evaluation</b><br/>
-<sub>IPW/CATE results, intervention uplift measurement</sub>
-</td>
-</tr>
-</table>
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Docker (recommended)
-
-```bash
-cd active_project
-docker compose up --build
-```
-
-| Service | URL |
-|---|---|
-| 🛍️ Storefront | [localhost:3000](http://localhost:3000) |
-| 📡 Analytics API | [localhost:3001](http://localhost:3001) |
-| 📊 Dashboard | [localhost:3002](http://localhost:3002) |
-| 🐘 PostgreSQL | localhost:5432 |
-
-### Option 2: Manual Setup
+If you prefer to run the services natively, follow these steps:
 
 <details>
-<summary><b>Click to expand manual setup instructions</b></summary>
+<summary><b>📋 Expand for step-by-step native instructions</b></summary>
 
 <br/>
 
-#### 1. Database
-
+#### 1. Database Initialization
+Create a PostgreSQL database named `analytics_db` and run the SQL scripts in numerical order:
 ```bash
 psql -U postgres -c "CREATE DATABASE analytics_db;"
 psql -U postgres -d analytics_db -f analytics-engine/sql/001_schema.sql
@@ -341,195 +163,72 @@ psql -U postgres -d analytics_db -f analytics-engine/sql/002_seed.sql
 psql -U postgres -d analytics_db -f analytics-engine/sql/003_sequences.sql
 psql -U postgres -d analytics_db -f analytics-engine/sql/004_context.sql
 psql -U postgres -d analytics_db -f analytics-engine/sql/005_context_seed.sql
+psql -U postgres -d analytics_db -f analytics-engine/sql/006_phenotypes.sql
 ```
 
-#### 2. Analytics API (port 3001)
-
+#### 2. Start the Analytics API
 ```bash
-cd active_project/analytics-api
-cp .env.example .env
-npm install && npm run dev
+cd analytics-api 
+cp .env.example .env 
+npm install 
+npm run dev
 ```
 
-#### 3. Python ML Pipeline
-
+#### 3. Execute the Python ML Pipeline
 ```bash
-cd active_project/analytics-engine
-python -m venv venv && source venv/bin/activate   # or .\venv\Scripts\activate on Windows
+cd analytics-engine
+python -m venv venv
+source venv/bin/activate  # On Windows use: .\venv\Scripts\activate
 pip install -r requirements.txt
 python processors/pipeline.py --mode=full
 ```
 
-#### 4. Dashboard (port 3002)
-
+#### 4. Start the Dashboard
 ```bash
-cd active_project/dashboard
-cp .env.example .env
-npm install && npm run dev
+cd dashboard 
+cp .env.example .env 
+npm install 
+npm run dev
 ```
 
-#### 5. Storefront (port 3000)
-
+#### 5. Start the Storefront
 ```bash
-cd active_project/storefront
-cp .env.example .env
-npm install && npm run dev
-```
-
-</details>
-
-### Medusa Commerce Backend
-
-<details>
-<summary><b>Click to expand Medusa setup instructions</b></summary>
-
-<br/>
-
-The Medusa backend powers the actual e-commerce functionality (products, orders, carts):
-
-```bash
-cd medusa-backend
-cp .env.example .env    # Configure DATABASE_URL, CORS, JWT secrets
-npm install
-npx medusa develop      # Starts on localhost:9000
-```
-
-The Medusa storefront:
-
-```bash
-cd medusa-backend-storefront
-cp .env.local.example .env.local
-npm install
-npm run dev             # Starts on localhost:8000
+cd storefront 
+cp .env.example .env 
+npm install 
+npm run dev
 ```
 
 </details>
 
 ---
 
-## 🧪 API Reference
+## 📁 Repository Structure
 
-<details>
-<summary><b>📡 Analytics API Endpoints</b></summary>
-
-<br/>
-
-| Method | Endpoint | Description |
-|:---:|---|---|
-| `POST` | `/api/events` | Ingest raw behavioral events |
-| `POST` | `/api/context-events` | Ingest enriched context events |
-| `GET` | `/api/score` | Real-time session risk scoring |
-| `GET` | `/api/analytics/summary` | Aggregated KPIs |
-| `GET` | `/api/analytics/products` | Per-product performance |
-| `GET` | `/api/analytics/funnel` | Conversion funnel data |
-| `GET` | `/api/analytics/paths` | Markov chain paths |
-| `GET` | `/api/analytics/predictions` | Churn/engagement predictions |
-| `GET` | `/api/analytics/recommendations` | Prescriptive recommendations |
-| `GET` | `/api/analytics/context` | Contextual decision analysis |
-| `GET` | `/api/analytics/evaluation` | Causal evaluation (IPW/CATE) |
-| `GET` | `/api/analytics/interventions` | Intervention decisions |
-
-</details>
-
----
-
-## 🗄️ Database Schema
-
-```mermaid
-erDiagram
-    events {
-        uuid id PK
-        text session_id
-        text event_type
-        jsonb properties
-        timestamp created_at
-    }
-
-    sessions {
-        text session_id PK
-        int event_count
-        boolean converted
-        timestamp started_at
-    }
-
-    decision_contexts {
-        uuid id PK
-        text session_id FK
-        int products_viewed_before
-        float price_relative_to_session
-        float scroll_depth
-        float time_on_page
-    }
-
-    sequence_transitions {
-        text from_state
-        text to_state
-        float probability
-        float conversion_lift
-    }
-
-    context_conditional_rates {
-        text product_id
-        text context_bucket
-        float conversion_rate
-        float chi_squared_p_value
-    }
-
-    intervention_assignments {
-        uuid id PK
-        text session_id FK
-        text arm_selected
-        text trigger_reason
-        float reward
-    }
-
-    events ||--o{ sessions : "belongs to"
-    sessions ||--o{ decision_contexts : "has"
-    sessions ||--o{ intervention_assignments : "receives"
-    decision_contexts ||--o{ context_conditional_rates : "computes"
 ```
-
----
-
-## 🛠️ Tech Stack
-
-<div align="center">
-
-| Layer | Technology | Purpose |
-|:---:|:---:|---|
-| 🛍️ Storefront | Next.js 14, TypeScript | Instrumented e-commerce frontend |
-| 📡 API | Next.js API Routes, `pg` | Event ingestion, analytics serving |
-| 🐍 ML Engine | Python, NumPy, SciPy | Markov chains, causal ML, statistical tests |
-| 💾 Database | PostgreSQL 16 | Event storage, computed analytics |
-| 📊 Dashboard | Next.js 14, Tailwind CSS | Analytics visualization |
-| 🏪 Commerce | MedusaJS v2 | Headless commerce (products, orders, carts) |
-| 🐳 DevOps | Docker Compose | Multi-service orchestration |
-
-</div>
-
----
-
-## 🚢 Deployment
-
-| Component | Platform | Tier |
-|---|---|---|
-| Storefront + Dashboard | Vercel | Free |
-| Analytics API | Fly.io | Free |
-| Python Engine | Fly.io | Free |
-| PostgreSQL | Fly.io / Neon.tech | Free |
+.
+├── active_project/
+│   ├── storefront/                 # Consumer-facing E-commerce UI (ZeroError)
+│   │   ├── app/                    # Next.js 14 application routing
+│   │   ├── components/             # React UI components and layout
+│   │   └── lib/tracking/           # Client-side FedAvg model and event tracker
+│   │
+│   ├── analytics-api/              # Central Node.js REST API
+│   │   ├── app/api/                # API route handlers
+│   │   └── lib/                    # Database connection logic
+│   │
+│   ├── analytics-engine/           # Python Machine Learning Backend
+│   │   ├── processors/             # Agent classes, orchestrator, and ML models
+│   │   └── sql/                    # Database schema definition and seed files
+│   │
+│   └── dashboard/                  # Administrative Analytics Panel
+│       ├── app/                    # Next.js pages for metrics and monitoring
+│       └── components/             # Recharts data visualization elements
+└── README.md
+```
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](license.md).
-
----
-
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:161b22,100:6e40c9&height=120&section=footer" width="100%"/>
-
-<sub>Built with 💜 for research-grade behavioral analytics</sub>
-
-</div>
+This project is licensed under the MIT License.
