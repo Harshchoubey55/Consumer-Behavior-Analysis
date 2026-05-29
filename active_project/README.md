@@ -231,4 +231,4 @@ npm run dev
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+All Rights Reserved. This software is the intellectual property of the author. It may not be copied, modified, or distributed without express written permission.
