@@ -46,7 +46,6 @@ export const updateItemQuantity = async ({
   quantity
 }: {
   lineId: string;
-  variantId: string;
   quantity: number;
 }): Promise<String | undefined> => {
   const cartId = cookies().get('cartId')?.value;
