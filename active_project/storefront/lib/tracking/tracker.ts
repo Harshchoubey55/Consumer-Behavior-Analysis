@@ -2,7 +2,19 @@
  * Consumer Behavior Tracker
  * Captures user interactions and sends them to the analytics ingestion API.
  * Runs client-side only. Uses batching + localStorage queue for reliability.
+ *
+ * FedAvg Integration:
+ * - Initializes a client-side logistic regression from the global model weights.
+ * - Accumulates (features, label) samples as the user browses product pages.
+ * - On session end (beforeunload), computes Δw and sends a sparse gradient delta.
+ * - Raw events are NEVER sent to the FedAvg endpoint — only the gradient vector.
  */
+import { localModel, initGlobalModel } from './local_model';
+
+// Initialize global model weights asynchronously on load (non-blocking)
+if (typeof window !== 'undefined') {
+  initGlobalModel().catch(() => {/* graceful degradation */});
+}
 
 const ANALYTICS_API = process.env.NEXT_PUBLIC_ANALYTICS_API_URL || 'http://localhost:3001';
 const BATCH_SIZE = 10;
@@ -376,6 +388,25 @@ export const tracker = {
       properties: ctx,  // full decision context in properties
     });
 
+    // FedAvg: add this product view as a training sample (label=0 initially)
+    localModel.addSample({
+      prior_product_views: ctx.prior_product_views,
+      prior_cart_adds: ctx.prior_cart_adds,
+      prior_searches: ctx.prior_searches,
+      session_duration_s: ctx.session_duration_so_far_s,
+      price_rank_in_session: ctx.price_rank_in_session,
+      price_vs_median_pct: ctx.price_vs_median_pct ?? 0,
+      is_most_expensive: ctx.is_most_expensive_seen,
+      is_cheapest: ctx.is_cheapest_seen,
+      scroll_depth_pct: ctx.scroll_depth_pct,
+      time_on_page_s: ctx.time_on_page_before_ms / 1000,
+      is_from_search: ctx.is_from_search,
+      is_return_view: ctx.is_return_view,
+      same_category_views: ctx.same_category_views_before,
+      hour_of_day: ctx.hour_of_day,
+      scroll_velocity: ctx.scroll_velocity_avg,
+    });
+
     // Update session state AFTER tracking
     sessionContext.productsSeen.push({
       id: product.id,
@@ -416,6 +447,8 @@ export const tracker = {
     });
 
     sessionContext.cartAdds += 1;
+    // FedAvg: mark the most recent product view sample as a cart-add (label=1)
+    localModel.markLastAsCartAdd();
   },
 
   /**
@@ -492,10 +525,24 @@ export const tracker = {
   onRiskUpdate,
 };
 
-// Auto-flush on page unload
+// Auto-flush on page unload + FedAvg gradient send
 if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => flush());
+  window.addEventListener('beforeunload', () => {
+    flush();
+    // FedAvg: send gradient delta if session had ≥3 product views
+    const sid = getOrCreateSessionId();
+    if (sid) {
+      localModel.sendUpdate(sid);
+    }
+  });
   window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flush();
+    if (document.visibilityState === 'hidden') {
+      flush();
+      // Also trigger FedAvg on tab hide (mobile: tab switch = likely session end)
+      const sid = getOrCreateSessionId();
+      if (sid) {
+        localModel.sendUpdate(sid);
+      }
+    }
   });
 }

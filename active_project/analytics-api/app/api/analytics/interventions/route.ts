@@ -18,7 +18,7 @@ export async function GET() {
       SELECT assigned_arm AS arm_name,
              COUNT(*) AS pulls,
              SUM(CASE WHEN outcome = 1 THEN 1 ELSE 0 END) AS conversions,
-             ROUND(AVG(CASE WHEN outcome_updated THEN outcome::numeric ELSE NULL END) * 100, 2) AS empirical_conversion_rate
+             ROUND(AVG(CASE WHEN outcome_updated = TRUE THEN outcome::numeric ELSE NULL END) * 100, 2) AS empirical_conversion_rate
       FROM intervention_logs
       GROUP BY assigned_arm
       ORDER BY pulls DESC

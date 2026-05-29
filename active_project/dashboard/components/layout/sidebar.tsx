@@ -2,16 +2,19 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 const nav = [
-  { href: '/',                label: 'Overview',        icon: '◈', section: null,       novel: false },
-  { href: '/funnel',          label: 'Funnel',           icon: '⌥', section: null,       novel: false },
-  { href: '/paths',           label: 'Behavior Paths',   icon: '⇢', section: null,       novel: false },
-  { href: '/products',        label: 'Products',         icon: '◻', section: null,       novel: false },
-  { href: '/sessions',        label: 'Sessions',         icon: '⊞', section: null,       novel: false },
-  { href: '/context',         label: 'Decision Context', icon: '◑', section: 'RESEARCH', novel: true  },
-  { href: '/evaluation',      label: 'Model Evaluation', icon: '◎', section: null,       novel: true  },
-  { href: '/interventions',   label: 'Adaptive Interventions', icon: '⚡', section: 'ADAPTIVE', novel: true  },
-  { href: '/predictions',     label: 'Predictions',      icon: '⊙', section: null,       novel: false },
-  { href: '/recommendations', label: 'Insights',         icon: '◉', section: null,       novel: false },
+  { href: '/',                label: 'Overview',        icon: '◈', section: null,          novel: false },
+  { href: '/funnel',          label: 'Funnel',           icon: '⌥', section: null,          novel: false },
+  { href: '/paths',           label: 'Behavior Paths',   icon: '⇢', section: null,          novel: false },
+  { href: '/products',        label: 'Products',         icon: '◻', section: null,          novel: false },
+  { href: '/sessions',        label: 'Sessions',         icon: '⊞', section: null,          novel: false },
+  { href: '/context',         label: 'Decision Context', icon: '◑', section: 'RESEARCH',    novel: true  },
+  { href: '/evaluation',      label: 'Model Evaluation', icon: '◎', section: null,          novel: true  },
+  { href: '/interventions',   label: 'Interventions',    icon: '⚡', section: 'ADAPTIVE',   novel: true  },
+  { href: '/predictions',     label: 'Predictions',      icon: '⊙', section: null,          novel: false },
+  { href: '/recommendations', label: 'Insights',         icon: '◉', section: null,          novel: false },
+  { href: '/phenotypes',      label: 'Behavioral Types', icon: '◆', section: 'INTELLIGENCE', novel: true  },
+  { href: '/anomalies',       label: 'Anomalies',        icon: '⚠', section: null,          novel: true  },
+  { href: '/agents',          label: 'Agent Health',     icon: '⬡', section: null,          novel: true  },
 ];
 export default function Sidebar() {
   const pathname = usePathname();

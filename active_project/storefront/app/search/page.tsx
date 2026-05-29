@@ -25,11 +25,17 @@ type SortMode = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
 function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  const categoryParam = searchParams.get('category') || '';
   const [sort, setSort] = useState<SortMode>('relevance');
   const [selectedCat, setSelectedCat] = useState<string>('');
 
   useEffect(() => {
-    if (query) {
+    // Direct category param takes priority (from Explore Series links)
+    if (categoryParam) {
+      const catMatch = CATEGORIES.find((c) => c.slug === categoryParam.toLowerCase());
+      if (catMatch) setSelectedCat(catMatch.slug);
+      else setSelectedCat('');
+    } else if (query) {
       tracker.search(query);
       // If query matches a category slug exactly, filter by it
       const catMatch = CATEGORIES.find((c) => c.slug === query.toLowerCase());
@@ -38,7 +44,7 @@ function SearchContent() {
     } else {
       setSelectedCat('');
     }
-  }, [query]);
+  }, [query, categoryParam]);
 
   const filtered = useMemo(() => {
     let results = PRODUCTS_LIST;

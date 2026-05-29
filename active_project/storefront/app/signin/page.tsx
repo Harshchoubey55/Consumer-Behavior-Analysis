@@ -17,7 +17,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [redirecting, setRedirecting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -33,10 +33,10 @@ export default function AuthPage() {
 
     let success = false;
     if (mode === 'signup') {
-      success = signUp(name, email, password);
+      success = await signUp(name, email, password);
       if (!success) setError('Account already exists with this email.');
     } else {
-      success = signIn(email, password);
+      success = await signIn(email, password);
       if (!success) setError('Invalid email or password.');
     }
 

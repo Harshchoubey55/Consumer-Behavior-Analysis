@@ -1,24 +1,32 @@
 """
 pipeline.py
 ===========
-Main analytics pipeline orchestrator.
+Analytics Pipeline — Agent-Based Architecture (v4.0)
 
-Runs all processing stages in order:
-  1.  Sessionization
-  2.  Product analytics
-  3.  User feature engineering
-  4.  Daily KPIs
-  5.  Funnel snapshots
-  6.  Prescriptive recommendations
-  7.  Session sequence building (for path visualisation only — not predictive)
-  8.  Markov transition matrix (descriptive visualisation only)
-  9.  Common path extraction
-  10. Context conditional rates + insights
-  11. Statistical evaluation + model comparison  ← new, runs on --mode=full
+All processing stages are now autonomous agents orchestrated by
+AgentOrchestrator (orchestrator.py). The orchestrator:
+  - Runs agents in parallel where their dependencies allow
+  - Persists execution metadata to the agent_runs table
+  - Handles failures gracefully (failed upstream → downstream skipped)
+
+Agents (in dependency order):
+  1.  SessionizationAgent    — raw events → session aggregates
+  2.  ProductAnalyticsAgent  — per-product engagement metrics
+  3.  UserFeatureAgent       — ML-ready user behavioral features
+  4.  KPIAgent               — daily KPI snapshots
+  5.  FunnelAgent            — drop-off funnel snapshots
+  6.  RecommendationAgent    — prescriptive recommendations
+  7.  SequenceModelAgent     — Markov matrix + common paths
+  8.  ContextAnalysisAgent   — decision context reconstruction (novel)
+  9.  InterventionAgent      — A/B experiment reward backfill
+  10. AnomalyDetectionAgent  — Markov log-probability flagging
+  11. PhenotypeAgent         — K-Means behavioral archetypes (full)
+  12. EvaluationAgent        — ML model evaluation (full)
+  13. FedAvgAgent            — FedAvg gradient aggregation (full)
 
 Usage:
-  python pipeline.py --mode=full          # everything including ML training
-  python pipeline.py --mode=incremental   # everything except ML training
+  python pipeline.py --mode=full          # all agents including ML
+  python pipeline.py --mode=incremental   # core agents only
 """
 
 import os
@@ -524,8 +532,37 @@ def build_session_sequences(conn):
 # MAIN
 # ─────────────────────────────────────────────
 
+
+# ─────────────────────────────────────────────
+# MAIN — Agent Orchestrator entrypoint
+# ─────────────────────────────────────────────
+
 def run_pipeline(mode: str = "incremental"):
-    log.info(f"Starting analytics pipeline (mode={mode}) at {datetime.now().isoformat()}...")
+    """
+    Primary entrypoint. Delegates to AgentOrchestrator which runs all
+    agents in parallel (where dependencies allow) and logs execution
+    metadata to the agent_runs table.
+    """
+    import sys
+    sys.path.insert(0, os.path.dirname(__file__))
+
+    try:
+        from orchestrator import AgentOrchestrator
+        orchestrator = AgentOrchestrator(mode=mode)
+        result = orchestrator.run()
+        log.info(f"Pipeline result: {result}")
+        return result
+    except ImportError as e:
+        log.error(f"Orchestrator import failed: {e}. Falling back to sequential execution.")
+        _run_pipeline_sequential(mode)
+
+
+def _run_pipeline_sequential(mode: str = "incremental"):
+    """
+    Fallback: sequential execution if orchestrator can't be loaded.
+    Preserves backward compatibility.
+    """
+    log.info(f"Starting analytics pipeline (sequential fallback, mode={mode})...")
     conn = get_conn()
     try:
         refresh_sessions(conn)
@@ -536,7 +573,6 @@ def run_pipeline(mode: str = "incremental"):
         generate_recommendations(conn)
         build_session_sequences(conn)
 
-        # Context analysis
         try:
             sys.path.insert(0, os.path.dirname(__file__))
             from context_analyzer import run_context_pipeline
@@ -544,7 +580,6 @@ def run_pipeline(mode: str = "incremental"):
         except Exception as e:
             log.warning(f"Context pipeline skipped: {e}")
 
-        # Statistical evaluation (full mode only — needs enough data)
         if mode == "full":
             try:
                 from evaluation_engine import run_evaluation_pipeline
@@ -552,14 +587,13 @@ def run_pipeline(mode: str = "incremental"):
             except Exception as e:
                 log.warning(f"Evaluation pipeline skipped: {e}")
 
-        # Stage 12: Intervention experiment reward backfill
         try:
             from causal_bandit import run_intervention_pipeline
             run_intervention_pipeline(conn)
         except Exception as e:
             log.warning(f"Intervention pipeline skipped: {e}")
 
-        log.info("Pipeline complete.")
+        log.info("Sequential pipeline complete.")
     finally:
         conn.close()
 
@@ -570,3 +604,4 @@ if __name__ == "__main__":
                         choices=["incremental", "full"])
     args = parser.parse_args()
     run_pipeline(args.mode)
+

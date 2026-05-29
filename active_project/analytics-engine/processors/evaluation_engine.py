@@ -926,9 +926,51 @@ def run_evaluation_pipeline(conn):
     }
 
 
+
 if __name__ == "__main__":
     conn = get_conn()
     try:
         run_evaluation_pipeline(conn)
     finally:
         conn.close()
+
+
+# ── Agent wrapper for the Orchestrator ──────────────────────────────────────
+
+try:
+    from agent_base import BaseAgent, InsufficientDataError
+
+    class EvaluationAgent(BaseAgent):
+        """
+        Wraps run_evaluation_pipeline() as an autonomous agent.
+        Only runs in --mode=full when ≥30 decision context rows exist.
+        """
+        name = "EvaluationAgent"
+        description = (
+            "Logistic Regression + Random Forest evaluation of behavioral context features. "
+            "Tests price anchoring and comparison fatigue hypotheses with proper p-values. "
+            "Computes IPW causal uplift estimates for A/B intervention arms."
+        )
+        version = "2.0"
+        dependencies = ["ContextAnalysisAgent"]
+
+        def run(self, conn):
+            try:
+                result = run_evaluation_pipeline(conn)
+                n = len(result.get('results', []))
+                return n, {
+                    "models_evaluated": n,
+                    "behavioral_effects": len(result.get('effects', [])),
+                    "uplift_arms": len(result.get('uplift', [])),
+                }
+            except ValueError as e:
+                raise InsufficientDataError(str(e))
+
+        def check_health(self, conn):
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) AS n FROM model_evaluation_results WHERE is_latest = TRUE")
+                n = cur.fetchone()["n"]
+            return {"latest_models": n}
+
+except ImportError:
+    pass  # agent_base not available (standalone usage)

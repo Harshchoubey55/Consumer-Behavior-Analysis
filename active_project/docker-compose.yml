@@ -18,6 +18,7 @@ services:
       - ./analytics-engine/sql/003_sequences.sql:/docker-entrypoint-initdb.d/03_sequences.sql
       - ./analytics-engine/sql/004_context.sql:/docker-entrypoint-initdb.d/04_context.sql
       - ./analytics-engine/sql/005_context_seed.sql:/docker-entrypoint-initdb.d/05_context_seed.sql
+      - ./analytics-engine/sql/006_phenotypes.sql:/docker-entrypoint-initdb.d/06_phenotypes.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d analytics_db"]
       interval: 5s
