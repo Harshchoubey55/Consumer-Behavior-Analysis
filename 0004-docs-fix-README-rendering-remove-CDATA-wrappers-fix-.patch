@@ -1,0 +1,455 @@
+From 61c1c1983a16c7fb80a2059c3208121f27b900d1 Mon Sep 17 00:00:00 2001
+From: Harshchoubey55 <harshcy55@gmail.com>
+Date: Fri, 10 Apr 2026 17:11:22 +0530
+Subject: [PATCH 4/4] docs: fix README rendering - remove CDATA wrappers, fix
+ spacing for GitHub markdown
+
+---
+ README.md                | 87 +++++++++++++++++++++-------------------
+ active_project/README.md | 77 +++++++++++++++++------------------
+ 2 files changed, 84 insertions(+), 80 deletions(-)
+
+diff --git a/README.md b/README.md
+index e82c4d0..1395480 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-<![CDATA[<div align="center">
++<div align="center">
+ 
+ <!-- Animated header using capsule render -->
+ <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:161b22,100:6e40c9&height=230&section=header&text=Consumer%20Behavior%20%26%20Pattern%20Analysis&fontSize=36&fontColor=ffffff&fontAlignY=35&desc=Real-time%20Cognitive%20Adaptive%20Analytics%20%E2%80%A2%20Causal%20ML%20%E2%80%A2%20Behavioral%20Intelligence&descSize=16&descAlignY=55&animation=fadeIn" width="100%"/>
+@@ -35,7 +35,7 @@
+ 
+ An **end-to-end behavioral intelligence platform** built on top of a real MedusaJS e-commerce store. It captures every user micro-interaction, reconstructs the **full decision context** at each moment, models sessions as **Markov chains**, applies **causal machine learning**, and surfaces insights through a research-grade dashboard.
+ 
+-> **The Novel Contribution:** Standard analytics records that a user viewed a product and didn't buy.  
++> **The Novel Contribution:** Standard analytics records that a user viewed a product and didn't buy.
+ > This system also records *how many products they'd already seen, what prices they'd been exposed to, how expensive this product looked relative to their session history, how long they hesitated, and whether they arrived via search or browse* — then uses causal ML to determine **why** they didn't convert and **intervenes in real-time** to change the outcome.
+ 
+ ---
+@@ -44,33 +44,33 @@ An **end-to-end behavioral intelligence platform** built on top of a real Medusa
+ 
+ ```mermaid
+ graph TB
+-    subgraph "👤 Customer Layer"
+-        SF["🛍️ Instrumented Storefront<br/><i>:3000</i>"]
++    subgraph Customer["👤 Customer Layer"]
++        SF["🛍️ Instrumented Storefront\n:3000"]
+     end
+ 
+-    subgraph "⚡ Ingestion Layer"
+-        API["📡 Analytics API<br/><i>:3001</i>"]
++    subgraph Ingestion["⚡ Ingestion Layer"]
++        API["📡 Analytics API\n:3001"]
+     end
+ 
+-    subgraph "💾 Storage Layer"
+-        PG[("🐘 PostgreSQL 16<br/><i>:5432</i>")]
++    subgraph Storage["💾 Storage Layer"]
++        PG[("🐘 PostgreSQL 16\n:5432")]
+     end
+ 
+-    subgraph "🧪 Intelligence Layer"
+-        ENG["🐍 Analytics Engine<br/><i>Python ML Pipeline</i>"]
++    subgraph Intelligence["🧪 Intelligence Layer"]
++        ENG["🐍 Analytics Engine\nPython ML Pipeline"]
+         CB["🎰 Causal Bandit"]
+         EVAL["📊 Evaluation Engine"]
+     end
+ 
+-    subgraph "📈 Visualization Layer"
+-        DASH["📊 Analytics Dashboard<br/><i>:3002</i>"]
++    subgraph Visualization["📈 Visualization Layer"]
++        DASH["📊 Analytics Dashboard\n:3002"]
+     end
+ 
+-    subgraph "🏪 Commerce Layer"
+-        MB["🔧 Medusa Backend<br/><i>:9000</i>"]
++    subgraph Commerce["🏪 Commerce Layer"]
++        MB["🔧 Medusa Backend\n:9000"]
+     end
+ 
+-    SF -->|"page_view, scroll_depth,<br/>hesitation, add_to_cart"| API
++    SF -->|"page_view, scroll_depth,\nhesitation, add_to_cart"| API
+     SF -->|"GET /api/score"| API
+     API -->|"INSERT events"| PG
+     API -.->|"risk score + intervention"| SF
+@@ -101,6 +101,7 @@ graph TB
+ <td width="50%">
+ 
+ ### 🔬 Contextual Decision Reconstruction
++
+ When a user doesn't convert, standard analytics sees **one event**. This system reconstructs the full situational context:
+ 
+ - 📦 How many products they'd already viewed
+@@ -110,13 +111,14 @@ When a user doesn't convert, standard analytics sees **one event**. This system
+ - 📉 Context-conditional conversion rates
+ - 🧪 Chi-squared significance testing
+ 
+-> *Same product viewed first → 31% conversion.*  
++> *Same product viewed first → 31% conversion.*
+ > *Viewed after 5 others → 8%. A 4× difference invisible to aggregate metrics.*
+ 
+ </td>
+ <td width="50%">
+ 
+ ### ⛓️ Sequential Behavioral Modeling
++
+ Sessions are **Markov chains**, not event counts:
+ 
+ ```mermaid
+@@ -145,6 +147,7 @@ graph LR
+ <td width="50%">
+ 
+ ### 🎯 Real-time Causal Interventions
++
+ A **Contextual Bandit** model detects cognitive friction and triggers UI interventions in real-time:
+ 
+ - 🧠 Detects comparison fatigue, price shock, attention decay
+@@ -156,14 +159,16 @@ A **Contextual Bandit** model detects cognitive friction and triggers UI interve
+ <td width="50%">
+ 
+ ### 📊 In-Session Risk Scoring
++
+ After every state transition, the tracker calls `/api/score`:
+ 
+ ```
+-User scrolls past fold → tracker detects hesitation
+-→ Markov scorer: P(abandon) = 0.73
+-→ Causal Bandit: show "10% off" nudge
+-→ InterventionProvider renders overlay
+-→ Outcome logged → bandit updates
++User scrolls past fold
++  → tracker detects hesitation
++  → Markov scorer: P(abandon) = 0.73
++  → Causal Bandit: show "10% off" nudge
++  → InterventionProvider renders overlay
++  → Outcome logged → bandit updates
+ ```
+ 
+ Hook into it: `tracker.onRiskUpdate(callback)`
+@@ -224,24 +229,13 @@ The Python engine runs an **8-stage pipeline** that transforms raw events into a
+ 
+ ```mermaid
+ graph LR
+-    subgraph "Stage 1-3: Foundation"
+-        S1["1️⃣ Sessionize<br/>Raw Events"]
+-        S2["2️⃣ Product<br/>Analytics"]
+-        S3["3️⃣ User<br/>Features"]
+-    end
+-
+-    subgraph "Stage 4-6: Aggregation"
+-        S4["4️⃣ Daily<br/>KPIs"]
+-        S5["5️⃣ Conversion<br/>Funnel"]
+-        S6["6️⃣ Prescriptive<br/>Rules"]
+-    end
+-
+-    subgraph "Stage 7-8: Intelligence ★"
+-        S7["7️⃣ Markov<br/>Chains"]
+-        S8["8️⃣ Context<br/>Reconstruction"]
+-    end
+-
+-    S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
++    S1["1️⃣ Sessionize\nRaw Events"] --> S2["2️⃣ Product\nAnalytics"]
++    S2 --> S3["3️⃣ User\nFeatures"]
++    S3 --> S4["4️⃣ Daily\nKPIs"]
++    S4 --> S5["5️⃣ Conversion\nFunnel"]
++    S5 --> S6["6️⃣ Prescriptive\nRules"]
++    S6 --> S7["7️⃣ Markov\nChains"]
++    S7 --> S8["8️⃣ Context\nReconstruction"]
+ 
+     style S1 fill:#3b82f6,stroke:#2563eb,color:#fff
+     style S2 fill:#3b82f6,stroke:#2563eb,color:#fff
+@@ -336,7 +330,10 @@ docker compose up --build
+ <details>
+ <summary><b>Click to expand manual setup instructions</b></summary>
+ 
++<br/>
++
+ #### 1. Database
++
+ ```bash
+ psql -U postgres -c "CREATE DATABASE analytics_db;"
+ psql -U postgres -d analytics_db -f analytics-engine/sql/001_schema.sql
+@@ -347,6 +344,7 @@ psql -U postgres -d analytics_db -f analytics-engine/sql/005_context_seed.sql
+ ```
+ 
+ #### 2. Analytics API (port 3001)
++
+ ```bash
+ cd active_project/analytics-api
+ cp .env.example .env
+@@ -354,6 +352,7 @@ npm install && npm run dev
+ ```
+ 
+ #### 3. Python ML Pipeline
++
+ ```bash
+ cd active_project/analytics-engine
+ python -m venv venv && source venv/bin/activate   # or .\venv\Scripts\activate on Windows
+@@ -362,6 +361,7 @@ python processors/pipeline.py --mode=full
+ ```
+ 
+ #### 4. Dashboard (port 3002)
++
+ ```bash
+ cd active_project/dashboard
+ cp .env.example .env
+@@ -369,6 +369,7 @@ npm install && npm run dev
+ ```
+ 
+ #### 5. Storefront (port 3000)
++
+ ```bash
+ cd active_project/storefront
+ cp .env.example .env
+@@ -382,6 +383,8 @@ npm install && npm run dev
+ <details>
+ <summary><b>Click to expand Medusa setup instructions</b></summary>
+ 
++<br/>
++
+ The Medusa backend powers the actual e-commerce functionality (products, orders, carts):
+ 
+ ```bash
+@@ -392,6 +395,7 @@ npx medusa develop      # Starts on localhost:9000
+ ```
+ 
+ The Medusa storefront:
++
+ ```bash
+ cd medusa-backend-storefront
+ cp .env.local.example .env.local
+@@ -408,6 +412,8 @@ npm run dev             # Starts on localhost:8000
+ <details>
+ <summary><b>📡 Analytics API Endpoints</b></summary>
+ 
++<br/>
++
+ | Method | Endpoint | Description |
+ |:---:|---|---|
+ | `POST` | `/api/events` | Ingest raw behavioral events |
+@@ -442,7 +448,6 @@ erDiagram
+     sessions {
+         text session_id PK
+         int event_count
+-        text[] states
+         boolean converted
+         timestamp started_at
+     }
+@@ -454,7 +459,6 @@ erDiagram
+         float price_relative_to_session
+         float scroll_depth
+         float time_on_page
+-        text arrival_intent
+     }
+ 
+     sequence_transitions {
+@@ -529,4 +533,3 @@ This project is licensed under the [MIT License](license.md).
+ <sub>Built with 💜 for research-grade behavioral analytics</sub>
+ 
+ </div>
+-]]>
+diff --git a/active_project/README.md b/active_project/README.md
+index 25ea057..92f0ff6 100644
+--- a/active_project/README.md
++++ b/active_project/README.md
+@@ -1,4 +1,4 @@
+-<![CDATA[<div align="center">
++<div align="center">
+ 
+ <img src="https://capsule-render.vercel.app/api?type=soft&color=0:6e40c9,100:2563eb&height=150&section=header&text=Cognitive%20Analytics%20Engine&fontSize=38&fontColor=ffffff&fontAlignY=45&desc=active_project%20%E2%80%94%20The%20Behavioral%20Intelligence%20System&descSize=16&descAlignY=70&animation=twinkling" width="100%"/>
+ 
+@@ -23,21 +23,21 @@ This is the **core analytics system** — a self-contained behavioral intelligen
+ 
+ ```mermaid
+ graph TB
+-    subgraph FRONTEND ["🌐 Frontend Layer"]
++    subgraph FRONTEND["🌐 Frontend Layer"]
+         direction LR
+         SF["🛍️ Storefront :3000"]
+         DASH["📊 Dashboard :3002"]
+     end
+ 
+-    subgraph BACKEND ["⚙️ Backend Layer"]
++    subgraph BACKEND["⚙️ Backend Layer"]
+         API["📡 Analytics API :3001"]
+     end
+ 
+-    subgraph DATA ["💾 Data Layer"]
++    subgraph DATA["💾 Data Layer"]
+         PG[("🐘 PostgreSQL :5432")]
+     end
+ 
+-    subgraph ML ["🧠 Intelligence Layer"]
++    subgraph ML["🧠 Intelligence Layer"]
+         ENG["🐍 Analytics Engine"]
+     end
+ 
+@@ -68,15 +68,15 @@ graph TB
+ 
+ ### 1️⃣ Contextual Decision Reconstruction
+ 
+-> *Standard analytics:* "User viewed Product A and didn't buy."  
++> *Standard analytics:* "User viewed Product A and didn't buy."
+ > *This system:* "User viewed Product A **after** seeing 5 cheaper products, making it look 40% more expensive than their session average. Attention depth was shallow (23% scroll). Arrived via browse, not search. **Context-conditional conversion: 8% vs. 31% if viewed first.**"
+ 
+ ```mermaid
+ graph LR
+-    E["🎯 Product View Event"] --> CR["📊 Context<br/>Reconstruction"]
+-    CR --> CCR["📈 Context-Conditional<br/>Conversion Rates"]
+-    CR --> CHI["🧪 Chi-Squared<br/>Significance Test"]
+-    CCR --> INS["💡 Contrastive<br/>Insight Generation"]
++    E["🎯 Product View Event"] --> CR["📊 Context\nReconstruction"]
++    CR --> CCR["📈 Context-Conditional\nConversion Rates"]
++    CR --> CHI["🧪 Chi-Squared\nSignificance Test"]
++    CCR --> INS["💡 Contrastive\nInsight Generation"]
+     CHI --> INS
+ 
+     style E fill:#3b82f6,stroke:#2563eb,color:#fff
+@@ -88,7 +88,7 @@ graph LR
+ 
+ **Insight types generated:** `comparison_fatigue`, `price_anchor_high`, `price_anchor_low`, `first_impression`, `attention_depth`, `search_intent`, `category_saturation`
+ 
+-###  2️⃣ Sequential Behavioral Modeling (Markov Chains)
++### 2️⃣ Sequential Behavioral Modeling (Markov Chains)
+ 
+ Sessions are **state sequences**, not event counts:
+ 
+@@ -97,6 +97,7 @@ Sessions are **state sequences**, not event counts:
+ ```
+ 
+ The sequence modeler computes:
++
+ - **Transition probability matrices** — P(Cart | View) = 0.28
+ - **Per-transition conversion lift** — Cart→Purchase has 2.3× lift over baseline
+ - **Common path mining** — Top 10 most frequent session paths
+@@ -116,10 +117,10 @@ sequenceDiagram
+     T->>API: POST /events + GET /score
+     API->>API: Markov risk = 0.73
+     API->>B: Select best arm for context
+-    B-->>API: "show_discount_10pct"
+-    API-->>T: { risk: 0.73, intervention: {...} }
++    B-->>API: show_discount_10pct
++    API-->>T: risk 0.73 + intervention
+     T->>UI: Render nudge
+-    UI->>U: "🎉 10% off — expires in 5 min"
++    UI->>U: 10% off — expires in 5 min
+     U->>T: add_to_cart (reward = 1)
+     T->>API: POST outcome → bandit learns
+ ```
+@@ -152,20 +153,13 @@ sequenceDiagram
+ ```mermaid
+ graph TD
+     RAW["📥 Raw Events"] --> S1
+-
+-    subgraph PIPELINE ["8-Stage Processing Pipeline"]
+-        S1["1. refresh_sessions<br/><sub>30-min inactivity sessionization</sub>"]
+-        S2["2. refresh_product_analytics<br/><sub>views, cart rate, time, scroll</sub>"]
+-        S3["3. compute_user_features<br/><sub>RFM, churn risk, engagement tier</sub>"]
+-        S4["4. refresh_daily_kpis<br/><sub>time-series snapshots</sub>"]
+-        S5["5. refresh_funnel<br/><sub>conversion funnel states</sub>"]
+-        S6["6. generate_recommendations<br/><sub>prescriptive rules engine</sub>"]
+-        S7["7. run_sequence_pipeline<br/><sub>Markov chains + anomalies</sub>"]
+-        S8["8. run_context_pipeline<br/><sub>decision reconstruction + chi²</sub>"]
+-
+-        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+-    end
+-
++    S1["1. refresh_sessions"] --> S2["2. refresh_product_analytics"]
++    S2 --> S3["3. compute_user_features"]
++    S3 --> S4["4. refresh_daily_kpis"]
++    S4 --> S5["5. refresh_funnel"]
++    S5 --> S6["6. generate_recommendations"]
++    S6 --> S7["7. run_sequence_pipeline"]
++    S7 --> S8["8. run_context_pipeline"]
+     S8 --> OUT["📊 Dashboard-Ready Analytics"]
+ 
+     style RAW fill:#6b7280,stroke:#4b5563,color:#fff
+@@ -204,7 +198,10 @@ docker compose up --build
+ <details>
+ <summary><b>📋 Step-by-step instructions</b></summary>
+ 
++<br/>
++
+ #### Database
++
+ ```bash
+ psql -U postgres -c "CREATE DATABASE analytics_db;"
+ psql -U postgres -d analytics_db -f analytics-engine/sql/001_schema.sql
+@@ -215,11 +212,13 @@ psql -U postgres -d analytics_db -f analytics-engine/sql/005_context_seed.sql
+ ```
+ 
+ #### Analytics API
++
+ ```bash
+ cd analytics-api && cp .env.example .env && npm install && npm run dev
+ ```
+ 
+ #### Python Pipeline
++
+ ```bash
+ cd analytics-engine
+ python -m venv venv
+@@ -229,11 +228,13 @@ python processors/pipeline.py --mode=full
+ ```
+ 
+ #### Dashboard
++
+ ```bash
+ cd dashboard && cp .env.example .env && npm install && npm run dev
+ ```
+ 
+ #### Storefront
++
+ ```bash
+ cd storefront && cp .env.example .env && npm install && npm run dev
+ ```
+@@ -251,17 +252,16 @@ active_project/
+ ├── storefront/                     # Instrumented storefront (:3000)
+ │   ├── app/
+ │   │   ├── page.tsx                    Homepage with product grid
+-│   │   ├── product/[handle]/page.tsx   Product detail page
++│   │   ├── product/[handle]/           Product detail page
+ │   │   ├── search/                     Search functionality
+ │   │   ├── dashboard/page.tsx          Embedded mini-dashboard (37KB)
+ │   │   └── api/                        Proxy API routes
+-│   ├── components/
+-│   │   ├── tracking/tracker.ts             ★ Core behavioral tracker (15KB)
+-│   │   ├── tracking/InterventionProvider   ★ Real-time intervention UI
+-│   │   ├── tracking/page-tracker.tsx       Auto page_view events
+-│   │   └── tracking/product-view-tracker   Detailed product_view events
++│   ├── components/tracking/
++│   │   ├── InterventionProvider.tsx     ★ Real-time intervention UI
++│   │   ├── page-tracker.tsx            Auto page_view events
++│   │   └── product-view-tracker.tsx    Detailed product_view events
+ │   └── lib/
+-│       ├── tracking/tracker.ts         Event capture engine
++│       ├── tracking/tracker.ts         ★ Core behavioral tracker (15KB)
+ │       ├── analytics/processor.ts      Client-side analytics (13KB)
+ │       └── db.ts                       Database connection
+ │
+@@ -276,8 +276,8 @@ active_project/
+ │   │       ├── funnel/route.ts         GET — conversion funnel
+ │   │       ├── paths/route.ts          GET — Markov paths
+ │   │       ├── predictions/route.ts    GET — ML predictions
+-│   │       ├── recommendations/route.ts GET — prescriptive actions
+-│   │       ├── context/route.ts        GET — decision context analysis
++│   │       ├── recommendations/        GET — prescriptive actions
++│   │       ├── context/route.ts        GET — decision context
+ │   │       ├── evaluation/route.ts     GET — causal evaluation
+ │   │       └── interventions/route.ts  GET — intervention decisions
+ │   └── lib/db.ts                   PostgreSQL pool
+@@ -322,6 +322,7 @@ active_project/
+ MIT
+ 
+ <div align="center">
++
+ <img src="https://capsule-render.vercel.app/api?type=waving&color=0:6e40c9,100:2563eb&height=100&section=footer" width="100%"/>
++
+ </div>
+-]]>
+-- 
+2.50.1.windows.1
+

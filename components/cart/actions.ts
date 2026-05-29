@@ -43,7 +43,6 @@ export const removeItem = async (lineId: string): Promise<String | undefined> =>
 
 export const updateItemQuantity = async ({
   lineId,
-  variantId,
   quantity
 }: {
   lineId: string;

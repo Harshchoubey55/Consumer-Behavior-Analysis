@@ -106,7 +106,7 @@ export default async function ProductPage({ params }: { params: { handle: string
   );
 }
 
-async function RelatedProducts({ id }: { id: string }) {
+async function RelatedProducts({}: { id: string }) {
   // const relatedProducts = await getProductRecommendations(id);
   const relatedProducts: any[] = [];
 

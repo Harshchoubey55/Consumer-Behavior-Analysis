@@ -60,8 +60,7 @@
   "overrides": {
     "react": "19.0.3",
     "react-dom": "19.0.3"
-  }
-  ,
+  },
   "engines": {
     "node": ">=20 <=20.20.0"
   }

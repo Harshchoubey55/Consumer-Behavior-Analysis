@@ -14,7 +14,6 @@ import {
   MedusaImage,
   MedusaLineItem,
   MedusaProduct,
-  MedusaProductCollection,
   MedusaProductOption,
   MedusaProductVariant,
   Product,
@@ -474,7 +473,7 @@ export async function getProducts({
 
   const rawProducts = res.body && Array.isArray(res.body.products) ? res.body.products : [];
 
-  let products: Product[] = rawProducts.map((product: MedusaProduct) => reshapeProduct(product));
+  const products: Product[] = rawProducts.map((product: MedusaProduct) => reshapeProduct(product));
 
   sortKey === 'PRICE' &&
     products.sort(

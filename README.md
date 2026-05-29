@@ -19,13 +19,13 @@ This project is a full-stack behavioral intelligence platform. It tracks user in
 
 ## 🚀 Key Capabilities
 
-| Capability | Description |
-|:---|:---|
-| **Autonomous Agent Pipeline** | A Python-based orchestrator that resolves dependencies and executes analytical tasks (sessionization, context analysis, sequence modeling) in parallel. |
-| **Federated Phenotyping (FedAvg)** | Groups users into behavioral archetypes using a local logistic regression model trained in the browser. Only sparse gradient updates (delta weights) are sent to the server. |
-| **Contextual Decision Reconstruction** | Analyzes what a user saw *before* making a decision (e.g. tracking if a product was viewed immediately after a much cheaper alternative). |
-| **Markov Sequence Modeling** | Treats user sessions as state sequences to calculate transition probability matrices and flag anomalous navigational paths. |
-| **IPW Causal Inference** | Evaluates the true effectiveness of UI interventions (like discount nudges) using Inverse Probability Weighting to remove selection bias. |
+| Capability                             | Description                                                                                                                                                                  |
+| :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Autonomous Agent Pipeline**          | A Python-based orchestrator that resolves dependencies and executes analytical tasks (sessionization, context analysis, sequence modeling) in parallel.                      |
+| **Federated Phenotyping (FedAvg)**     | Groups users into behavioral archetypes using a local logistic regression model trained in the browser. Only sparse gradient updates (delta weights) are sent to the server. |
+| **Contextual Decision Reconstruction** | Analyzes what a user saw _before_ making a decision (e.g. tracking if a product was viewed immediately after a much cheaper alternative).                                    |
+| **Markov Sequence Modeling**           | Treats user sessions as state sequences to calculate transition probability matrices and flag anomalous navigational paths.                                                  |
+| **IPW Causal Inference**               | Evaluates the true effectiveness of UI interventions (like discount nudges) using Inverse Probability Weighting to remove selection bias.                                    |
 
 ---
 
@@ -71,6 +71,7 @@ graph TB
 ## 🧠 Deep Dive: The Machine Learning Pipeline
 
 ### 1. The Autonomous Agent Orchestrator
+
 Rather than running a sequential script, the backend operates as a multi-agent system. If one agent encounters a data shortage, it halts safely while non-dependent agents continue processing.
 
 ```mermaid
@@ -86,7 +87,7 @@ graph TD
     PHENO["Phenotype Classifier Agent"]
     EVAL["IPW Evaluation Agent"]
     FED["FedAvg Aggregation Agent"]
-    
+
     SESS --> PROD
     SESS --> USR
     PROD --> CTX
@@ -99,7 +100,9 @@ graph TD
 ```
 
 ### 2. Federated Learning (FedAvg) Workflow
+
 To classify users without storing their raw clickstreams centrally, the project implements a federated learning architecture:
+
 1. **Local Training:** The Next.js storefront trains a 15-parameter logistic regression model entirely in the user's browser based on their scrolling and clicking context.
 2. **Gradient Extraction:** Upon session exit, the model calculates the top 7 gradient updates (delta weights).
 3. **Transmission:** Only these sparse, anonymous mathematical updates are sent to the Node.js API.
@@ -111,26 +114,27 @@ To classify users without storing their raw clickstreams centrally, the project 
 
 The Node.js backend exposes the following primary endpoints for the Storefront and Dashboard:
 
-| Endpoint | Method | Purpose |
-|:---|:---:|:---|
-| `/api/events` | `POST` | Ingests raw behavioral events (clicks, views). |
-| `/api/context-events` | `POST` | Ingests enriched events containing prior viewing context. |
-| `/api/fedavg-update` | `POST` | Receives sparse gradient updates from the browser's local model. |
-| `/api/global-model` | `GET` | Serves aggregated global model weights for client initialization. |
-| `/api/analytics/agents` | `GET` | Returns execution logs, health, and status of all Python agents. |
-| `/api/analytics/phenotypes` | `GET` | Returns behavioral archetypes, cluster centroids, and federated groupings. |
-| `/api/analytics/anomalies` | `GET` | Identifies suspicious session paths using Z-Score calculations. |
-| `/api/analytics/evaluation` | `GET` | Returns causal evaluation metrics (IPW/CATE) for UI interventions. |
+| Endpoint                    | Method | Purpose                                                                    |
+| :-------------------------- | :----: | :------------------------------------------------------------------------- |
+| `/api/events`               | `POST` | Ingests raw behavioral events (clicks, views).                             |
+| `/api/context-events`       | `POST` | Ingests enriched events containing prior viewing context.                  |
+| `/api/fedavg-update`        | `POST` | Receives sparse gradient updates from the browser's local model.           |
+| `/api/global-model`         | `GET`  | Serves aggregated global model weights for client initialization.          |
+| `/api/analytics/agents`     | `GET`  | Returns execution logs, health, and status of all Python agents.           |
+| `/api/analytics/phenotypes` | `GET`  | Returns behavioral archetypes, cluster centroids, and federated groupings. |
+| `/api/analytics/anomalies`  | `GET`  | Identifies suspicious session paths using Z-Score calculations.            |
+| `/api/analytics/evaluation` | `GET`  | Returns causal evaluation metrics (IPW/CATE) for UI interventions.         |
 
 ---
 
 ## 💻 Getting Started
 
 ### Prerequisites
-* Docker and Docker Compose (Recommended)
-* Node.js v18+ (For manual setup)
-* Python 3.10+ (For manual setup)
-* PostgreSQL 16+ (For manual setup)
+
+- Docker and Docker Compose (Recommended)
+- Node.js v18+ (For manual setup)
+- Python 3.10+ (For manual setup)
+- PostgreSQL 16+ (For manual setup)
 
 ### Option A: Docker Installation (Recommended)
 
@@ -140,10 +144,10 @@ The Node.js backend exposes the following primary endpoints for the Storefront a
    docker compose up --build
    ```
 3. The services will initialize and become available at:
-   * **Storefront:** http://localhost:3000
-   * **Dashboard:** http://localhost:3002
-   * **Analytics API:** http://localhost:3001
-   * **Database:** localhost:5432
+   - **Storefront:** http://localhost:3000
+   - **Dashboard:** http://localhost:3002
+   - **Analytics API:** http://localhost:3001
+   - **Database:** localhost:5432
 
 ### Option B: Manual Setup
 
@@ -155,7 +159,9 @@ If you prefer to run the services natively, follow these steps:
 <br/>
 
 #### 1. Database Initialization
+
 Create a PostgreSQL database named `analytics_db` and run the SQL scripts in numerical order:
+
 ```bash
 psql -U postgres -c "CREATE DATABASE analytics_db;"
 psql -U postgres -d analytics_db -f analytics-engine/sql/001_schema.sql
@@ -167,14 +173,16 @@ psql -U postgres -d analytics_db -f analytics-engine/sql/006_phenotypes.sql
 ```
 
 #### 2. Start the Analytics API
+
 ```bash
-cd analytics-api 
-cp .env.example .env 
-npm install 
+cd analytics-api
+cp .env.example .env
+npm install
 npm run dev
 ```
 
 #### 3. Execute the Python ML Pipeline
+
 ```bash
 cd analytics-engine
 python -m venv venv
@@ -184,18 +192,20 @@ python processors/pipeline.py --mode=full
 ```
 
 #### 4. Start the Dashboard
+
 ```bash
-cd dashboard 
-cp .env.example .env 
-npm install 
+cd dashboard
+cp .env.example .env
+npm install
 npm run dev
 ```
 
 #### 5. Start the Storefront
+
 ```bash
-cd storefront 
-cp .env.example .env 
-npm install 
+cd storefront
+cp .env.example .env
+npm install
 npm run dev
 ```
 
